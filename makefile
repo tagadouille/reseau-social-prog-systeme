@@ -11,8 +11,8 @@ TARGET_SERVER = server
 
 # Fichiers sources
 
-CLIENT_SRCS = $(SRC_DIR)...c \
-SERVER_SRCS =
+CLIENT_SRCS = $(wildcard $(SRC_DIR)*.c)
+SERVER_SRCS = $(wildcard $(SRC_DIR)*.c)
 
 # Fichiers objets
 CLIENT_OBJS = $(CLIENT_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)

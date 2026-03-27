@@ -1,5 +1,8 @@
 #include "thread_array.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 thread_array_t * thread_array_init(size_t initial_capacity) {
 
     thread_array_t * array = malloc(sizeof(thread_array_t));

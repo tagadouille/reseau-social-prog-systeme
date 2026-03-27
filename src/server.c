@@ -112,7 +112,11 @@ int main() {
         nb_client++;
     }
 
-
+    for (size_t i = 0; i < thread_array->count; i++)
+    {
+        pthread_join(thread_array->threads[i], NULL);
+    }
+    
     ret = EXIT_SUCCESS;
 
     error:
