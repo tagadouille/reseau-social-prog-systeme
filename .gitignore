@@ -1,0 +1,9 @@
+.o
+.obj
+objs/
+.cache
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
