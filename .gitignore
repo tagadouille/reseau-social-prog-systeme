@@ -7,3 +7,5 @@ objs/
 *.swp
 .DS_Store
 Thumbs.db
+/bin/
+/build/

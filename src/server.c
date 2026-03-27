@@ -11,10 +11,10 @@
 #include "client_handler.h"
 
 /**
- * @brief Configures the server by creating a socket, 
- * setting socket options, binding to a port, 
+ * @brief Configures the server by creating a socket,
+ * setting socket options, binding to a port,
  * and listening for incoming connections.
- * 
+ *
  * @return int The file descriptor for the server socket.
  */
 static int server_config()
@@ -22,13 +22,15 @@ static int server_config()
     // Create a socket for the server
     int socket_fd = socket(AF_INET6, SOCK_STREAM, 0);
 
-    if(socket_fd == -1) {
+    if (socket_fd == -1)
+    {
         perror("socket server");
         exit(EXIT_FAILURE);
     }
 
     // Set socket options to allow reuse of the address and port :
-    if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) {
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1)
+    {
         perror("setsockopt server");
         close(socket_fd);
         exit(EXIT_FAILURE);
@@ -43,43 +45,50 @@ static int server_config()
     server_addr.sin6_port = htons(PORT);
 
     // Bind the socket to the specified port :
-    if(bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+    if (bind(socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    {
         perror("bind server");
         goto error;
     }
 
     // Listen for incoming connections :
-    if(listen(socket_fd, 0) == -1) {
+    if (listen(socket_fd, 0) == -1)
+    {
         perror("listen server");
         goto error;
     }
 
     return socket_fd;
 
-    error:
+error:
     close(socket_fd);
     exit(EXIT_FAILURE);
 }
 
-int main() {
+int main()
+{
 
     int socket_fd = server_config();
-    
+
     short ret = EXIT_FAILURE;
 
-    thread_array_t * thread_array = thread_array_init(5);
+    thread_array_t *thread_array = thread_array_init(5);
 
-    if(thread_array == NULL) {
+    if (thread_array == NULL)
+    {
         goto error;
     }
 
     size_t nb_client = 0;
 
-    while(1) {
+    while (1)
+    {
 
         // resize the thread array :
-        if(nb_client >= thread_array->capacity) {
-            if(thread_array_resize(thread_array) == NULL) {
+        if (nb_client >= thread_array->capacity)
+        {
+            if (thread_array_resize(thread_array) == NULL)
+            {
                 goto error;
             }
         }
@@ -87,22 +96,25 @@ int main() {
         struct sockaddr_in6 client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
 
-        int* client_fd = malloc(sizeof(int));
+        int *client_fd = malloc(sizeof(int));
 
-        if(client_fd == NULL) {
+        if (client_fd == NULL)
+        {
             perror("malloc client fd");
             goto error;
         }
 
         // Accept an incoming connection :
-        *client_fd = accept(socket_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+        *client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
-        if(*client_fd == -1) {
+        if (*client_fd == -1)
+        {
             perror("accept server");
             goto error;
         }
 
-        if(pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0) {
+        if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
+        {
             perror("pthread_create server");
             free(client_fd);
             close(*client_fd);
@@ -116,10 +128,10 @@ int main() {
     {
         pthread_join(thread_array->threads[i], NULL);
     }
-    
+
     ret = EXIT_SUCCESS;
 
-    error:
+error:
     thread_array_destroy(thread_array);
     close(socket_fd);
 

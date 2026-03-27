@@ -1,31 +1,20 @@
 /**
- * @file utils.h
- * @brief Fonctions utilitaires communes pour le projet Paroles.
+ * @file utils.c
+ * @brief Implémentation des fonctions utilitaires de gestion mémoire sécurisée.
  *
- * Ce fichier déclare des fonctions d'aide globales, notamment des versions "sécurisées"
- * pour l'allocation de mémoire ainsi que des raccourcis de notations de structures prédifinies en C
- * afin de faciliter l'écriture de code et la lecture
+ * Ce fichier fournit des versions "sécurisées" pour les fonctions
+ * d'allocation mémoire standard (malloc, realloc). Ces versions
+ * ("x-fonctions") terminent le programme en cas d'échec d'allocation,
+ * évitant ainsi de devoir tester le retour de NULL à chaque appel.
  */
-#ifndef UTILS_H
-#define UTILS_H
 
-#include <stdint.h>
-#include <stddef.h> // Pour le type size_t
-#include <sys/types.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
-
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+#include "utils.h"
 
 /**
  * @brief Alloue de la mémoire de manière sécurisée (exit on failure).
- *
  * Tente d'allouer 'size' octets de mémoire en utilisant malloc.
  * Si l'allocation échoue (malloc retourne NULL), un message d'erreur
  * est affiché via perror et le programme se termine avec EXIT_FAILURE.
@@ -34,7 +23,16 @@ typedef uint64_t u64;
  * @return void* Un pointeur vers la zone mémoire allouée.
  * @note Cette fonction ne retourne jamais NULL.
  */
-void *xmalloc(size_t size);
+void *xmalloc(size_t size)
+{
+    void *p = malloc(size);
+    if (p == NULL)
+    {
+        perror("Allocation mémoire échouée (xmalloc)");
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
 
 /**
  * @brief Réalloue de la mémoire de manière sécurisée (exit on failure).
@@ -49,7 +47,13 @@ void *xmalloc(size_t size);
  * @return void* Un pointeur vers la (potentiellement) nouvelle zone mémoire.
  * @note Cette fonction ne retourne jamais NULL.
  */
-void *xrealloc(void *ptr, size_t size);
-
-
-#endif
+void *xrealloc(void *ptr, size_t size)
+{
+    void *p = realloc(ptr, size);
+    if (p == NULL)
+    {
+        perror("Réallocation mémoire échouée (xrealloc)");
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
