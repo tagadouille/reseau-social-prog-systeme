@@ -3,6 +3,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <string.h>
+#include <pthread.h>
 
 #include "server.h"
 
@@ -63,7 +65,37 @@ int main() {
     
     short ret = EXIT_FAILURE;
 
-    
+    thread_array_t thread_array = {
+        count : 0,
+        capacity : 10,
+        threads : NULL
+    };
+
+    thread_array.threads = malloc(thread_array.capacity * sizeof(pthread_t));
+
+    if(thread_array.threads == NULL) {
+        perror("malloc thread array");
+        goto error;
+    }
+
+    while(1) {
+
+        struct sockaddr_in6 client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+
+        // Accept an incoming connection :
+        int client_fd = accept(socket_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+
+        if(client_fd == -1) {
+            perror("accept server");
+            goto error;
+        }
+
+        // Close the client socket after handling the connection
+        close(client_fd);
+    }
+
+
     ret = EXIT_SUCCESS;
 
     error:
