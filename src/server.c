@@ -7,6 +7,8 @@
 #include <pthread.h>
 
 #include "server.h"
+#include "thread_array.h"
+#include "client_handler.h"
 
 /**
  * @brief Configures the server by creating a socket, 
@@ -65,40 +67,56 @@ int main() {
     
     short ret = EXIT_FAILURE;
 
-    thread_array_t thread_array = {
-        count : 0,
-        capacity : 10,
-        threads : NULL
-    };
+    thread_array_t * thread_array = thread_array_init(5);
 
-    thread_array.threads = malloc(thread_array.capacity * sizeof(pthread_t));
-
-    if(thread_array.threads == NULL) {
-        perror("malloc thread array");
+    if(thread_array == NULL) {
         goto error;
     }
 
+    size_t nb_client = 0;
+
     while(1) {
+
+        // resize the thread array :
+        if(nb_client >= thread_array->capacity) {
+            if(thread_array_resize(thread_array) == NULL) {
+                goto error;
+            }
+        }
 
         struct sockaddr_in6 client_addr;
         socklen_t client_addr_len = sizeof(client_addr);
 
-        // Accept an incoming connection :
-        int client_fd = accept(socket_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+        int* client_fd = malloc(sizeof(int));
 
-        if(client_fd == -1) {
+        if(client_fd == NULL) {
+            perror("malloc client fd");
+            goto error;
+        }
+
+        // Accept an incoming connection :
+        *client_fd = accept(socket_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+
+        if(*client_fd == -1) {
             perror("accept server");
             goto error;
         }
 
-        // Close the client socket after handling the connection
-        close(client_fd);
+        if(pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0) {
+            perror("pthread_create server");
+            free(client_fd);
+            close(*client_fd);
+            goto error;
+        }
+
+        nb_client++;
     }
 
 
     ret = EXIT_SUCCESS;
 
     error:
+    thread_array_destroy(thread_array);
     close(socket_fd);
 
     exit(ret);
