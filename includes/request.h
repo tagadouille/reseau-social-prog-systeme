@@ -3,116 +3,131 @@
 
 #include "./utils.h"
 
-/**
-   CODEREQ = 1,
-   NOM est le pseudo de l’utilisateur·ice de 10 caractères maximum, avec complétion par des
-   caractères nuls si le pseudo fait moins de 10 caractères,
-   CLE correspond à la clef publique de l’utilisateur·ice sous forme d’une chaîne de caractères
-*/
-typedef struct inscription
-{
-	u16 codereq; // sur 5bits le reste à 0, A METTRE EN BE
-	u8 nom[10];
-	u8 cle[118]; // Vide si pas de securite
-} req_inscription;
+// Masques pour limiter la taille des données (le nombre de bits à 1)
+#define MASK_11_BITS 0x07FF // Binaire: 0000 0111 1111 1111
 
-/**
-   CODEREQ = 3,
-   NOMG est le nom du groupe avec LEN son nombre de caractères.
-*/
-typedef struct creation_groupe
-{
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u8 len;
-	u8 *nomg; // de taille len
-} req_new_grp;
+#define MASK_5_BITS 0x1F // Binaire: 0000 0000 0001 1111
 
-/**
-   CODEREQ = 5,
-   IDG est l’identifiant du groupe,
-   NB est le nombre d’invitations suivi des NB identifiants des utilisateur·ices invité·es et ZEROS
-   (ID1 et ZEROS, ID2 et ZEROS...)
-*/
-typedef struct invitation_grp
-{
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg_nb; // idg sur 11bits le reste pour nb, A METTRE EN BE
-	u16 *id_personne; // taille nb, 5 dernier bits à 0, A METTRE EN BE
-} req_inv_grp;
+/* =========================================================================
+ * RÈGLE GLOBALE : Tous les champs numériques (u16) doivent être convertis
+ * en Big Endian (ordre réseau) avec htons() avant d'être copiés dans le buffer.
+ * Ce travail est censé être réalisé dans le fichier serialization.c
+ * ========================================================================= */
 
-/**
-   CODEREQ = 6
-*/
-typedef struct list_invitation_grp
+/* CODEREQ = 1
+ * Inscription utilisateur
+ * -> envoie pseudo (10 max) + clé publique (113 octets)
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE	
-} req_list_inv;
+   u16 req_code;    // 5 bits CODEREQ + 11 bits à 0
+   u8 username[10]; // pseudo (complété avec '\0' si <10)
+   u8 pub_key[113]; // clé publique (format PEM)
+} req_register;
 
-/**
-   CODEREQ = 8,
-   IDG est l’identifiant du groupe,
-   AN vaut 1 si une invitation est acceptée, 0 si elle refusée et 2 si l’utilisateur·ice demande à
-   quitter le groupe
-*/
-typedef struct request_rej_quit_grp
+/* CODEREQ = 3
+ * Création d’un groupe
+ * -> envoie le nom du groupe (taille variable)
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg_an; // idg sur 11bits, 2 bits pour AN, reste à 0, A METTRE EN BE
-} req_rej_quit;
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u8 name_len;          // longueur du nom
+   u8 *group_name;       // nom du groupe (taille name_len)
+} req_create_group;
 
-/**
-   CODEREQ = 10,
-   IDG est l’identifiant du groupe si la requête concerne les membres du groupe, et vaut 0 si
-   elle concerne toustes les utilisateur·ices inscrit·es.
-*/
-typedef struct list_membre
+/* CODEREQ = 5
+ * Invitation dans un groupe
+ * -> ID du groupe + liste des utilisateurs invités
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg; // idg sur 11bits, reste à 0, A METTRE EN BE	
-} req_list_mb;
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id_count;   // 11 bits ID groupe + 5 bits nb invités
+   u16 *invited_ids;     // tableau de nb IDs (11 bits ID + 5 bits à 0 chacun)
+} req_invite_group;
 
-/**
-   CODEREQ = 12,
-   IDG est l’identifiant du groupe,
-   LEN est la longueur du billet en octets,
-   DATA est le billet.
-*/
-typedef struct billet
+/* CODEREQ = 6
+ * Demande des invitations reçues
+ * -> récupère les invitations en attente de l'utilisateur
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg; // idg sur 11bits, reste à 0, A METTRE EN BE
-	u16 len; // A METTRE EN BE
-	u8 *data; // taille len
-} req_billet;
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+} req_list_invitations;
 
-/**
-   CODEREQ = 14,
-   IDG est l’identifiant du groupe,
-   NUMB est le numéro du billet auquel l’utilisateur·ice répond,
-   LEN est la longueur de la réponse en octets,
-   DATA est la réponse.
-*/
-typedef struct reponse_billet
+/* CODEREQ = 8
+ * Répondre à une invitation / quitter un groupe
+ * -> action : 1 = accepter, 0 = refuser, 2 = quitter
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg; // idg sur 11bits, reste à 0, A METTRE EN BE
-	u16 numb; // numb sur 11bits, reste à 0, A METTRE EN BE
-	u16 len; // A METTRE EN BE
-	u8 *data; // taille len
-} req_rep_billet;
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id_action;  // 11 bits ID groupe + 2 bits action + 3 bits à 0
+} req_group_action;
 
-/**
-   CODEREQ = 16,
-   IDG est l’identifiant du groupe,
-   NUMB est le numéro du dernier billet reçu avec le numéro de la dernière réponse à ce billet
-   NUMR reçue.
-*/
-typedef struct list_billet
+/* CODEREQ = 10
+ * Liste des membres
+ * -> si group_id = 0 : tous les utilisateurs
+ */
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 idg; // idg sur 11bits, reste à 0, A METTRE EN BE
-	u16 numb_numr; // numb sur 11bits, reste pour numr, A METTRE EN BE
-} req_list_billet;
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id;         // 11 bits ID groupe + 5 bits à 0
+} req_list_members;
 
+/* CODEREQ = 12
+ * Poster un billet
+ * -> envoie un message dans un groupe
+ */
+typedef struct
+{
+   u16 req_code_group_id; // 5 bits CODEREQ + 11 bits ID GROUPE
+   u16 user_id_zeros;     // 11 bits ID user + 5 bits à 0
+   u16 data_len;          // taille du message
+   u8 *data;              // contenu du billet
+} req_post_message;
+
+/* CODEREQ = 14
+ * Répondre à un billet
+ * -> réponse à un message existant
+ */
+typedef struct
+{
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id;         // 11 bits ID groupe + 5 bits à 0
+   u16 ticket_id;        // 11 bits numéro du billet + 5 bits à 0
+   u16 data_len;         // taille de la réponse
+   u8 *data;             // contenu de la réponse
+} req_reply_message;
+
+/* CODEREQ = 16
+ * Récupérer les billets récents
+ * -> à partir du dernier billet/réponse reçus
+ */
+typedef struct
+{
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id;         // 11 bits ID groupe + 5 bits à 0
+   u16 ticket_reply_ids; // 11 bits NUMB + 5 bits NUMR
+} req_list_messages;
+
+void prepare_register_req(req_register *req, const char *username);
+
+void prepare_group_req(req_create_group *req, int ID, const char *NOMG);
+
+void prepare_invitation_req(req_invite_group *req, int ID, int ID_group, int guest_number, u16 *guest_ids);
+
+void prepare_waiting_invitation_list_req(req_list_invitations *req);
+
+void prepare_invitation_response_req(req_group_action *req);
+
+void prepare_list_members_req(req_list_members *req);
+
+void prepare_post_message_req(req_post_message *req);
+
+void prepare_reply_message_req(req_reply_message *req);
+
+void prepare_list_messages_req(req_list_messages *req);
 
 #endif

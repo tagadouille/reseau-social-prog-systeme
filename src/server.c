@@ -32,8 +32,7 @@ static int server_config()
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1)
     {
         perror("setsockopt server");
-        close(socket_fd);
-        exit(EXIT_FAILURE);
+        goto error;
     }
 
     struct sockaddr_in6 server_addr;
@@ -131,7 +130,7 @@ int main()
 
     ret = EXIT_SUCCESS;
 
-error:
+error:   
     thread_array_destroy(thread_array);
     close(socket_fd);
 
