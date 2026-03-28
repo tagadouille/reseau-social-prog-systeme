@@ -152,7 +152,7 @@ typedef struct info_billet
 	u16 numb_numr; // numb sur 11 bits, le reste pour numr, A METTRE EN BE
 	u16 len;	   // A METTRE EN BE
 	u8 *data;	   // taille len
-} info_bilet;
+} info_billet;
 
 /**
    CODEREQ = 17,
