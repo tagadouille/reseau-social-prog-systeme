@@ -51,16 +51,27 @@ void prepare_invitation_req(req_invite_group *req, int ID, int ID_group, int gue
     }
 }
 
-void prepare_waiting_invitation_list_req(req_list_invitations *req)
+void prepare_waiting_invitation_list_req(req_list_invitations *req, int ID)
+{
+    req->req_code_user_id = ((REQ_GET_INVITES & MASK_5_BITS) << 11) | (ID & MASK_11_BITS);
+}
+
+void prepare_invitation_response_req(req_group_action *req, int ID, int ID_group, int answer)
+{
+    req->req_code_user_id = ((REQ_GROUP_ACTION & MASK_5_BITS) << 11) | (ID & MASK_11_BITS);
+    req->group_id_action = ((ID_group & MASK_11_BITS) << 5) | ((answer & MASK_2_BITS) << 3);
+}
+
+void prepare_list_members_req(req_list_members *req, int ID, int ID_group)
+{
+    req->req_code_user_id = ((REQ_GET_MEMBERS & MASK_5_BITS) << 11) | (ID & MASK_11_BITS);
+    req->group_id = ((ID_group & MASK_11_BITS) << 5);
+}
+
+void prepare_post_message_req(req_post_message *req)
 {
     
 }
-
-void prepare_invitation_response_req(req_group_action *req);
-
-void prepare_list_members_req(req_list_members *req);
-
-void prepare_post_message_req(req_post_message *req);
 
 void prepare_reply_message_req(req_reply_message *req);
 

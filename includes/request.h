@@ -8,6 +8,7 @@
 
 #define MASK_5_BITS 0x1F // Binaire: 0000 0000 0001 1111
 
+#define MASK_2_BITS 0x03 // Binaire: 0000 0000 0000 0011
 /* =========================================================================
  * RÈGLE GLOBALE : Tous les champs numériques (u16) doivent être convertis
  * en Big Endian (ordre réseau) avec htons() avant d'être copiés dans le buffer.
@@ -118,11 +119,11 @@ void prepare_group_req(req_create_group *req, int ID, const char *NOMG);
 
 void prepare_invitation_req(req_invite_group *req, int ID, int ID_group, int guest_number, u16 *guest_ids);
 
-void prepare_waiting_invitation_list_req(req_list_invitations *req);
+void prepare_waiting_invitation_list_req(req_list_invitations *req, int ID);
 
-void prepare_invitation_response_req(req_group_action *req);
+void prepare_invitation_response_req(req_group_action *req, int ID, int ID_group, int answer);
 
-void prepare_list_members_req(req_list_members *req);
+void prepare_list_members_req(req_list_members *req, int ID, int ID_group);
 
 void prepare_post_message_req(req_post_message *req);
 
