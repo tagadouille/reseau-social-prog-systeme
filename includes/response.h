@@ -12,7 +12,7 @@ CLE correspond à la clef publique du serveur sous forme d’une chaîne de cara
 typedef struct response_inscription
 {
 	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 port_udp; // A METTRE EN BE
+	u16 port_udp;	// A METTRE EN BE
 	u8 cle[113];
 } resp_inscription;
 
@@ -26,8 +26,8 @@ multidiffusion unique du groupe attribuée par le serveur.
 typedef struct response_new_grp
 {
 	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 portmdiff; // A METTRE EN BE
-	u8 ipmdiff[16]; 
+	u16 portmdiff;	// A METTRE EN BE
+	u8 ipmdiff[16];
 } resp_new_grp;
 
 /**
@@ -47,7 +47,7 @@ typedef struct info_group
 {
 	u16 idg_len; // idg sur 11bits, le reste pour len, A METTRE EN BE
 	u8 *nom_grp; // taille len
-	u8 nom[10]; // admin du groupe
+	u8 nom[10];	 // admin du groupe
 } info_group;
 
 /**
@@ -59,7 +59,7 @@ du groupe (NOMi).
  */
 typedef struct response_list_inv_grp
 {
-	u16 codereq_nb; // codereq sur 5bits le reste pour nb, A METTRE EN BE
+	u16 codereq_nb;	  // codereq sur 5bits le reste pour nb, A METTRE EN BE
 	info_group *grps; // taille nb
 } resp_list_inv;
 
@@ -85,10 +85,10 @@ groupe.
  */
 typedef struct response_inv_accept_grp
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 portmdiff; // A METTRE EN BE
-	u8 ipmdiff[16]; // A METTRE EN BE
-	u16 nb_personne; // A METTRE EN BE
+	u16 codereq_idg;		  // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
+	u16 portmdiff;			  // A METTRE EN BE
+	u8 ipmdiff[16];			  // A METTRE EN BE
+	u16 nb_personne;		  // A METTRE EN BE
 	info_person *list_person; // taille nb_personne
 } resp_inv_accept_grp;
 
@@ -110,8 +110,8 @@ groupe.
  */
 typedef struct response_list_grp
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 nb_personne; // A METTRE EN BE
+	u16 codereq_idg;		  // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
+	u16 nb_personne;		  // A METTRE EN BE
 	info_person *list_person; // taille nb_personne
 } resp_list_grp;
 
@@ -124,7 +124,7 @@ de façon incrémentale à partir de 0.
 typedef struct response_billet
 {
 	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 numb; // numb sur 11 bits, le reste à 0, A METTRE EN BE
+	u16 numb;		 // numb sur 11 bits, le reste à 0, A METTRE EN BE
 } resp_billet;
 
 /**
@@ -137,7 +137,7 @@ incrémentale à partir de 1
 typedef struct response_rep_billet
 {
 	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 numb_numr; // numb sur 11 bits, le reste pour numr, A METTRE EN BE
+	u16 numb_numr;	 // numb sur 11 bits, le reste pour numr, A METTRE EN BE
 } resp_rep_billet;
 
 /**
@@ -148,10 +148,10 @@ réponse (DATA).
  */
 typedef struct info_billet
 {
-	u16 id; // id sur 11bits le reste à 0, A METTRE EN BE
+	u16 id;		   // id sur 11bits le reste à 0, A METTRE EN BE
 	u16 numb_numr; // numb sur 11 bits, le reste pour numr, A METTRE EN BE
-	u16 len; // A METTRE EN BE
-	u8 *data; // taille len
+	u16 len;	   // A METTRE EN BE
+	u8 *data;	   // taille len
 } info_bilet;
 
 /**
@@ -165,8 +165,8 @@ réponse (DATAi).
  */
 typedef struct response_history_billet
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 nb; // A METTRE EN BE
+	u16 codereq_idg;		  // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
+	u16 nb;					  // A METTRE EN BE
 	info_billet *list_billet; // taille nb
 } resp_history_billet;
 

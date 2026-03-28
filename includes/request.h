@@ -83,10 +83,10 @@ typedef struct
  */
 typedef struct
 {
-   u16 req_code_group_id; // 5 bits CODEREQ + 11 bits ID GROUPE
-   u16 user_id_zeros;     // 11 bits ID user + 5 bits à 0
-   u16 data_len;          // taille du message
-   u8 *data;              // contenu du billet
+   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id;         // 11 bits ID GROUPE + 5 bits à 0
+   u16 data_len;         // taille du message
+   u8 *data;             // contenu du billet
 } req_post_message;
 
 /* CODEREQ = 14
@@ -108,9 +108,9 @@ typedef struct
  */
 typedef struct
 {
-   u16 req_code_user_id; // 5 bits CODEREQ + 11 bits ID user
-   u16 group_id;         // 11 bits ID groupe + 5 bits à 0
-   u16 ticket_reply_ids; // 11 bits NUMB + 5 bits NUMR
+   u16 req_code_user_id;     // 5 bits CODEREQ + 11 bits ID user
+   u16 group_id;             // 11 bits ID groupe + 5 bits à 0
+   u16 last_ticket_reply_id; // 11 bits NUMB + 5 bits NUMR
 } req_list_messages;
 
 void prepare_register_req(req_register *req, const char *username);
@@ -125,10 +125,10 @@ void prepare_invitation_response_req(req_group_action *req, int ID, int ID_group
 
 void prepare_list_members_req(req_list_members *req, int ID, int ID_group);
 
-void prepare_post_message_req(req_post_message *req);
+void prepare_post_message_req(req_post_message *req, int ID, int ID_group, const char *msg);
 
-void prepare_reply_message_req(req_reply_message *req);
+void prepare_reply_message_req(req_reply_message *req, int ID, int ID_group, int ID_ticket, const char *msg);
 
-void prepare_list_messages_req(req_list_messages *req);
+void prepare_list_messages_req(req_list_messages *req, int ID, int ID_group, int ID_last_ticket, int ID_last_reply);
 
 #endif

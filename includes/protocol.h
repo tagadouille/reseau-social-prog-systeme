@@ -12,7 +12,7 @@
 #define REQ_GET_MEMBERS 0x0a  // Client demande les membres d'un groupe (ou tous les inscrits si 0)
 #define REQ_POST_TICKET 0x0c  // Client poste un nouveau billet sur le fil
 #define REQ_REPLY_TICKET 0x0e // Client répond à un billet spécifique
-#define REQ_GET_TICKETS 0x10  // Client demande les derniers billets depuis un certain numéro
+#define REQ_GET_LAST_TICKET 0x10  // Client demande le dernier billet reçu avec le numéro de la dernière réponse à ce billet
 
 // =========================================================
 // ÉCHANGES SERVEUR -> CLIENT (Réponses directes)
