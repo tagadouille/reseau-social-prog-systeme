@@ -7,9 +7,17 @@
  */
 #ifndef UTILS_H
 #define UTILS_H
-#define BUF_SIZE 512
 
 #include <stdint.h>
+
+#define BUF_SIZE 512
+
+// Masques pour limiter la taille des données (le nombre de bits à 1)
+#define MASK_11_BITS 0x07FF // Binaire: 0000 0111 1111 1111
+
+#define MASK_5_BITS 0x1F // Binaire: 0000 0000 0001 1111
+
+#define MASK_2_BITS 0x03 // Binaire: 0000 0000 0000 0011
 
 typedef int8_t i8;
 typedef int16_t i16;

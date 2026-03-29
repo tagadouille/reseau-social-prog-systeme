@@ -1,14 +1,8 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include "./utils.h"
+#include "utils.h"
 
-// Masques pour limiter la taille des données (le nombre de bits à 1)
-#define MASK_11_BITS 0x07FF // Binaire: 0000 0111 1111 1111
-
-#define MASK_5_BITS 0x1F // Binaire: 0000 0000 0001 1111
-
-#define MASK_2_BITS 0x03 // Binaire: 0000 0000 0000 0011
 /* =========================================================================
  * RÈGLE GLOBALE : Tous les champs numériques (u16) doivent être convertis
  * en Big Endian (ordre réseau) avec htons() avant d'être copiés dans le buffer.
