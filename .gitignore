@@ -1,6 +1,8 @@
 .o
 .obj
-objs/
+client
+server
+obj/
 .cache
 .vscode/
 .idea/

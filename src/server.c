@@ -115,8 +115,8 @@ int main()
         if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
         {
             perror("pthread_create server");
-            free(client_fd);
             close(*client_fd);
+            free(client_fd);
             goto error;
         }
 

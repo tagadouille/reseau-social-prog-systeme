@@ -75,7 +75,7 @@ void prepare_invitation_req(req_invite_group *req, int ID, int ID_group, int gue
         return;
     }
 
-    for (size_t i = 0; i < guest_number; i++)
+    for (int i = 0; i < guest_number; i++)
     {
         req->invited_ids[i] = ((guest_ids[i] & MASK_11_BITS) << 5);
     }

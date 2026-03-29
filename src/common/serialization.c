@@ -511,7 +511,7 @@ ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp)
         return -1;
 
     // 3. Boucle d'écriture de chaque invitation.
-    for (size_t i = 0; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
         resp_group_invitation_info *invitations = &(resp->invitations[i]);
 
