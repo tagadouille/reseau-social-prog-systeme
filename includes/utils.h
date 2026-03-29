@@ -29,4 +29,9 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+// --- Fonctions réseau (Garantissent qu'on reçoit/envoie TOUT) inspiré du cours ---
+int recv_all(int sock, char *buf, int len);
+int send_all(int sock, const char *buf, int len);
+
+
 #endif
