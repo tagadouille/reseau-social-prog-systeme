@@ -62,6 +62,7 @@ typedef struct
 
 /* Élément membre de groupe
  * -> ID utilisateur + nom
+ * Il faut transmettre cette information à tout les membres d'un groupe et l'admin dès qu'un utilisateur rejoint ou quitte un groupe
  */
 typedef struct
 {
@@ -129,9 +130,9 @@ typedef struct
  */
 typedef struct
 {
-	u16 resp_code_group_id;	  // 5 bits CODEREQ + 11 bits IDG
-	u16 message_count;		  // nombre d'éléments envoyés
-	resp_message_info *items; // tableau de taille message_count
+	u16 resp_code_group_id;				// 5 bits CODEREQ + 11 bits IDG
+	u16 message_count;					// nombre d'éléments envoyés
+	resp_message_info *message_history; // tableau de taille message_count
 } resp_list_messages;
 
 /* CODEREQ = 31
@@ -152,6 +153,39 @@ typedef struct
 	u16 notif_code_group_id; // 5 bits CODEREQ + 11 bits IDG
 } resp_group_notification;
 
+/* Fonctions de préparation des réponses */
+void prepare_register_resp(resp_register *resp, int user_id, int udp_port);
 
+void prepare_group_resp(resp_create_group *resp, int group_id, int mdiff_port, const u8 *mdiff_addr);
+
+void prepare_ack_resp(resp_generic_ack *resp);
+
+/* CODEREQ = 7 : liste des invitations */
+void init_list_invitations_resp(resp_list_invitations *resp, int count);
+
+void set_invitation_item_resp(resp_list_invitations *resp, int index, int group_id, u8 name_len, const u8 *group_name, const u8 *admin_name);
+
+/* CODEREQ = 9 : invitation acceptée */
+void init_accept_invitation_resp(resp_accept_invitation *resp, int group_id, u16 mdiff_port, const u8 *mdiff_ipv6, int member_count);
+
+void set_accept_invitation_member(resp_accept_invitation *resp, int index, int member_id, const u8 *member_name);
+
+/* CODEREQ = 11 : liste des membres */
+void init_list_members_resp(resp_list_members *resp, int group_id, int member_count);
+
+void set_list_member_resp(resp_list_members *resp, int index, int member_id, const u8 *member_name);
+
+/* CODEREQ = 13 et 15 : accusés de billet/réponse */
+void prepare_post_message_resp(resp_post_message *resp, int group_id, int ticket_id);
+
+void prepare_reply_message_resp(resp_reply_message *resp, int group_id, int ticket_id, int reply_id);
+
+/* CODEREQ = 17 : historique des billets */
+void init_list_messages_resp(resp_list_messages *resp, int group_id, int message_count);
+
+void set_list_message_item(resp_list_messages *resp, int index, int author_id, int ticket_id, int reply_id, const u8 *data, u16 data_len);
+
+/* CODEREQ = 18..23 : notifications serveur */
+void prepare_notification_resp(resp_group_notification *resp, int notif_code, int group_id);
 
 #endif
