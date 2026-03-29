@@ -255,24 +255,238 @@ ssize_t build_list_messages_req(u8 *buf, req_list_messages *req)
 
 // ----------------------- RESPONSES ---------------------------------------
 
-ssize_t build_register_resp(u8 *buf, resp_register *resp);
+ssize_t build_register_resp(u8 *buf, resp_register *resp)
+{
+    u8 *p = buf;
 
-ssize_t build_group_resp(u8 *buf, resp_create_group *resp);
+    u16 resp_code = htons(resp->resp_code_user_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
 
-ssize_t build_generic_ack_resp(u8 *buf, resp_generic_ack *resp);
+    p += sizeof(resp_code);
 
-ssize_t build_error_resp(u8 *buf, resp_error *resp);
+    u16 udp_port = htons(resp->udp_port);
+    memcpy(p, &udp_port, sizeof(udp_port));
 
-ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp);
+    p += sizeof(udp_port);
 
-ssize_t build_accept_invitation_resp(u8 *buf, resp_accept_invitation *resp);
+    size_t len_public_key = sizeof(resp->server_pub_key);
+    memcpy(p, resp->server_pub_key, len_public_key);
+    p += len_public_key;
 
-ssize_t build_list_members_resp(u8 *buf, resp_list_members *resp);
+    return (size_t)(p - buf);
+}
 
-ssize_t build_post_message_resp(u8 *buf, resp_post_message *resp);
+ssize_t build_group_resp(u8 *buf, resp_create_group *resp)
+{
+    u8 *p = buf;
 
-ssize_t build_reply_message_resp(u8 *buf, resp_reply_message *resp);
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
 
-ssize_t build_list_messages_resp(u8 *buf, resp_list_messages *resp);
+    p += sizeof(resp_code);
 
-ssize_t build_group_notification_resp(u8 *buf, resp_group_notification *resp);
+    u16 mdiff_port = htons(resp->mdiff_port);
+    memcpy(p, &mdiff_port, sizeof(mdiff_port));
+
+    p += sizeof(mdiff_port);
+
+    size_t len_mdiff_ipv6 = sizeof(resp->mdiff_ipv6);
+    memcpy(p, resp->mdiff_ipv6, len_mdiff_ipv6);
+    p += len_mdiff_ipv6;
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_generic_ack_resp(u8 *buf, resp_generic_ack *resp)
+{
+    u8 *p = buf;
+
+    u16 ack = htons(resp->resp_header);
+    memcpy(p, &ack, sizeof(ack));
+
+    p += sizeof(ack);
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_error_resp(u8 *buf, resp_error *resp)
+{
+    u8 *p = buf;
+
+    u16 err = htons(resp->resp_code);
+    memcpy(p, &err, sizeof(err));
+
+    p += sizeof(err);
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_count);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    int count = (resp->resp_code_count & MASK_11_BITS);
+    for (size_t i = 0; i < count; i++)
+    {
+        resp_group_invitation_info *invitations = &(resp->invitations[i]);
+
+        u16 group_id_name_len = htons(invitations->group_id_name_len);
+        memcpy(p, &group_id_name_len, sizeof(group_id_name_len));
+        p += sizeof(group_id_name_len);
+
+        size_t len_group_name = (invitations->group_id_name_len & MASK_5_BITS);
+        memcpy(p, invitations->group_name, len_group_name);
+        p += len_group_name;
+
+        size_t len_admin_name = sizeof(invitations->admin_name);
+        memcpy(p, invitations->admin_name, len_admin_name);
+        p += len_admin_name;
+    }
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_accept_invitation_resp(u8 *buf, resp_accept_invitation *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    u16 mdiff_port = htons(resp->mdiff_port);
+    memcpy(p, &mdiff_port, sizeof(mdiff_port));
+
+    p += sizeof(mdiff_port);
+
+    size_t len_mdiff_ipv6 = sizeof(resp->mdiff_ipv6);
+    memcpy(p, resp->mdiff_ipv6, len_mdiff_ipv6);
+    p += len_mdiff_ipv6;
+
+    u16 member_count = htons(resp->member_count);
+    memcpy(p, &member_count, sizeof(member_count));
+    p += sizeof(member_count);
+
+    for (size_t i = 0; i < resp->member_count; i++)
+    {
+        resp_user_info *member = &(resp->members[i]);
+
+        u16 user_id = htons(member->user_id);
+        memcpy(p, &user_id, sizeof(user_id));
+        p += sizeof(user_id);
+
+        size_t len_name = sizeof(member->name);
+        memcpy(p, member->name, len_name);
+        p += len_name;
+    }
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_list_members_resp(u8 *buf, resp_list_members *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    u16 member_count = htons(resp->member_count);
+    memcpy(p, &member_count, sizeof(member_count));
+    p += sizeof(member_count);
+
+    for (size_t i = 0; i < resp->member_count; i++)
+    {
+        resp_user_info *member = &(resp->members[i]);
+
+        u16 user_id = htons(member->user_id);
+        memcpy(p, &user_id, sizeof(user_id));
+        p += sizeof(user_id);
+
+        size_t len_name = sizeof(member->name);
+        memcpy(p, member->name, len_name);
+        p += len_name;
+    }
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_post_message_resp(u8 *buf, resp_post_message *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    u16 ticket_id = htons(resp->ticket_id);
+    memcpy(p, &ticket_id, sizeof(ticket_id));
+    p += sizeof(ticket_id);
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_reply_message_resp(u8 *buf, resp_reply_message *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    u16 ticket_id = htons(resp->ticket_reply_id);
+    memcpy(p, &ticket_id, sizeof(ticket_id));
+    p += sizeof(ticket_id);
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_list_messages_resp(u8 *buf, resp_list_messages *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->resp_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    u16 message_count = htons(resp->message_count);
+    memcpy(p, &message_count, sizeof(message_count));
+    p += sizeof(message_count);
+
+    for (size_t i = 0; i < resp->message_count; i++)
+    {
+        resp_message_info *message = &(resp->message_history[i]);
+
+        u16 author_id = htons(message->author_id);
+        memcpy(p, &author_id, sizeof(author_id));
+        p += sizeof(author_id);
+
+        u16 ticket_reply_id = htons(message->ticket_reply_id);
+        memcpy(p, &ticket_reply_id, sizeof(ticket_reply_id));
+        p += sizeof(ticket_reply_id);
+
+        u16 data_len = htons(message->data_len);
+        memcpy(p, &data_len, sizeof(data_len));
+        p += sizeof(data_len);
+
+        memcpy(p, message->data, message->data_len);
+        p += message->data_len;
+    }
+
+    return (size_t)(p - buf);
+}
+
+ssize_t build_group_notification_resp(u8 *buf, resp_group_notification *resp)
+{
+    u8 *p = buf;
+
+    u16 resp_code = htons(resp->notif_code_group_id);
+    memcpy(p, &resp_code, sizeof(resp_code));
+    p += sizeof(resp_code);
+
+    return (size_t)(p - buf);
+}

@@ -85,109 +85,84 @@ ssize_t build_list_messages_req(u8 *buf, req_list_messages *req);
 
 // ----------------------- RESPONSES ---------------------------------------
 
-ssize_t build_register_resp(u8 *buf, resp_register *resp)
-{
-    u8 *p = buf;
+/*
+ * Réponse inscription (CODEREQ = 2).
+ * Format encodé :
+ *   resp_code_user_id | udp_port | server_pub_key[113]
+ */
+ssize_t build_register_resp(u8 *buf, resp_register *resp);
 
-    u16 resp_code = htons(resp->resp_code_user_id);
-    memcpy(p, &resp_code, sizeof(resp_code));
+/*
+ * Réponse création groupe (CODEREQ = 4).
+ * Format encodé :
+ *   resp_code_group_id | mdiff_port | mdiff_ipv6[16]
+ */
+ssize_t build_group_resp(u8 *buf, resp_create_group *resp);
 
-    p += sizeof(resp_code);
+/*
+ * ACK générique (CODEREQ = 24).
+ * Format encodé :
+ *   resp_header
+ */
+ssize_t build_generic_ack_resp(u8 *buf, resp_generic_ack *resp);
 
-    u16 udp_port = htons(resp->udp_port);
-    memcpy(p, &udp_port, sizeof(udp_port));
+/*
+ * Erreur générique (CODEREQ = 31).
+ * Format encodé :
+ *   resp_code
+ */
+ssize_t build_error_resp(u8 *buf, resp_error *resp);
 
-    p += sizeof(udp_port);
+/*
+ * Liste des invitations (CODEREQ = 7).
+ * Format encodé :
+ *   resp_code_count
+ *   puis pour chaque invitation : group_id_name_len | group_name[LEN] | admin_name[10]
+ */
+ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp);
 
-    size_t len_public_key = sizeof(resp->server_pub_key);
-    memcpy(p, resp->server_pub_key, len_public_key);
-    p += len_public_key;
+/*
+ * Invitation acceptée (CODEREQ = 9).
+ * Format encodé :
+ *   resp_code_group_id | mdiff_port | mdiff_ipv6[16] | member_count
+ *   puis member_count fois : user_id | name[10]
+ */
+ssize_t build_accept_invitation_resp(u8 *buf, resp_accept_invitation *resp);
 
-    return (size_t)(p - buf);
-}
+/*
+ * Liste des membres (CODEREQ = 11).
+ * Format encodé :
+ *   resp_code_group_id | member_count
+ *   puis member_count fois : user_id | name[10]
+ */
+ssize_t build_list_members_resp(u8 *buf, resp_list_members *resp);
 
-ssize_t build_group_resp(u8 *buf, resp_create_group *resp)
-{
-    u8 *p = buf;
+/*
+ * Accusé billet (CODEREQ = 13).
+ * Format encodé :
+ *   resp_code_group_id | ticket_id
+ */
+ssize_t build_post_message_resp(u8 *buf, resp_post_message *resp);
 
-    u16 resp_code = htons(resp->resp_code_group_id);
-    memcpy(p, &resp_code, sizeof(resp_code));
+/*
+ * Accusé réponse à billet (CODEREQ = 15).
+ * Format encodé :
+ *   resp_code_group_id | ticket_reply_id
+ */
+ssize_t build_reply_message_resp(u8 *buf, resp_reply_message *resp);
 
-    p += sizeof(resp_code);
+/*
+ * Historique des messages (CODEREQ = 17).
+ * Format encodé :
+ *   resp_code_group_id | message_count
+ *   puis pour chaque élément : author_id | ticket_reply_id | data_len | data[data_len]
+ */
+ssize_t build_list_messages_resp(u8 *buf, resp_list_messages *resp);
 
-    u16 mdiff_port = htons(resp->mdiff_port);
-    memcpy(p, &mdiff_port, sizeof(mdiff_port));
-
-    p += sizeof(mdiff_port);
-
-    size_t len_mdiff_ipv6 = sizeof(resp->mdiff_ipv6);
-    memcpy(p, resp->mdiff_ipv6, len_mdiff_ipv6);
-    p += len_mdiff_ipv6;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_generic_ack_resp(u8 *buf, resp_generic_ack *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_error_resp(u8 *buf, resp_error *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_accept_invitation_resp(u8 *buf, resp_accept_invitation *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_list_members_resp(u8 *buf, resp_list_members *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_post_message_resp(u8 *buf, resp_post_message *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_reply_message_resp(u8 *buf, resp_reply_message *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_list_messages_resp(u8 *buf, resp_list_messages *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
-ssize_t build_group_notification_resp(u8 *buf, resp_group_notification *resp)
-{
-    u8 *p = buf;
-
-    return (size_t)(p - buf);
-}
-
+/*
+ * Notification groupe (CODEREQ = 18..23).
+ * Format encodé :
+ *   notif_code_group_id
+ */
+ssize_t build_group_notification_resp(u8 *buf, resp_group_notification *resp);
 #endif
