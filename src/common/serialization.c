@@ -252,3 +252,27 @@ ssize_t build_list_messages_req(u8 *buf, req_list_messages *req)
 
     return (size_t)(p - buf);
 }
+
+// ----------------------- RESPONSES ---------------------------------------
+
+ssize_t build_register_resp(u8 *buf, resp_register *resp);
+
+ssize_t build_group_resp(u8 *buf, resp_create_group *resp);
+
+ssize_t build_generic_ack_resp(u8 *buf, resp_generic_ack *resp);
+
+ssize_t build_error_resp(u8 *buf, resp_error *resp);
+
+ssize_t build_list_invitations_resp(u8 *buf, resp_list_invitations *resp);
+
+ssize_t build_accept_invitation_resp(u8 *buf, resp_accept_invitation *resp);
+
+ssize_t build_list_members_resp(u8 *buf, resp_list_members *resp);
+
+ssize_t build_post_message_resp(u8 *buf, resp_post_message *resp);
+
+ssize_t build_reply_message_resp(u8 *buf, resp_reply_message *resp);
+
+ssize_t build_list_messages_resp(u8 *buf, resp_list_messages *resp);
+
+ssize_t build_group_notification_resp(u8 *buf, resp_group_notification *resp);
