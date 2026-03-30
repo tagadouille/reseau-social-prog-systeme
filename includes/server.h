@@ -3,5 +3,7 @@
 
 #define PORT 4321
 
+extern int is_terminated;
+
 
 #endif
