@@ -14,6 +14,7 @@
 #include "../includes/register.h"
 
 req_register *prepare_request(u8 name[10], u8 key[113]);
+ssize_t generate_register_request(u8 *buf, char name[10]);
 
 int main()
 {
@@ -35,46 +36,22 @@ int main()
 		exit(1);
 	}
 
-        /* Création de la requête */
+	
 	char name[10];
 	snprintf(name, sizeof(name), "testuser");
-
-	req_register *request = malloc(sizeof(req_register));
-	if (!request)
-	{
-		perror("malloc request");
-		exit(1);
-	}
-
-	prepare_register_req(request, name);
 
 	u8 *send_buf = malloc(SIZE_REQ_REGISTER);
 	if (!send_buf) {
 		perror("malloc send_buf");
-		free(request);
 		exit(1);
 	}
 
-	ssize_t len = build_register_req(send_buf, request);
-	if (len < 0)
-	{
-		perror("build_register_req");
-		free(send_buf);
-		free(request);
-		close(sock);
-		exit(1);
-	}
-
-	/* Log pour voir la requête envoyé */
-	int fd = open("./bin/output_inscription.bin", O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	write(fd, send_buf, SIZE_REQ_REGISTER);
-	close(fd);
+	ssize_t len = generate_register_request(send_buf, name);
 
 	printf("Requete : %s\n", send_buf);
 	printf("Envoi de la requête d'inscription (%zd octets)\n", len);
 	send_all(sock, (char *)send_buf, len);
 	free(send_buf);
-	free(request);
 
 	/* Reception et affichage de la réponse du serveur */
 	u8 *recv_buf = malloc(SIZE_RESP_REGISTER);
@@ -110,9 +87,41 @@ int main()
 	printf("=== Réponse du serveur ===\n");
 	printf("  ID attribué  : %d\n", user_id);
 	printf("  Port UDP     : %d\n", udp_port);
-
 	free(response);
 	free(recv_buf);
 	close(sock);
 	return 0;
+}
+
+/**
+ * Permet de créer la requête pour qu'un client s'inscrive, 'buf' est la chaine ou on met la requête et 'name' le nom de l'utilisateur.
+ * RETURN VALUE : -1 si problème de malloc ou build_register_req sinon renvoit la taille du message.
+ */
+ssize_t generate_register_request(u8 *buf, char name[10])
+{
+        /* Création de la requête */
+
+	req_register *request = malloc(sizeof(req_register));
+	if (!request)
+	{
+		perror("malloc request");
+		return -1;
+	}
+
+	prepare_register_req(request, name);
+
+	ssize_t len = build_register_req(buf, request);
+	if (len < 0)
+	{
+		perror("build_register_req");
+		free(buf);
+		free(request);
+		return -1;
+	}
+
+	/* Log pour voir la requête envoyé */
+	int fd = open("./bin/output_inscription.bin", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	write(fd, buf, SIZE_REQ_REGISTER);
+	close(fd);
+	return len;
 }
