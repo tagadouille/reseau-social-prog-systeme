@@ -3,198 +3,189 @@
 
 #include "utils.h"
 
-/**
-   CODEREQ = 2,
-ID est l’identifiant unique de l’utilisateur·ice attribué par le serveur,
-PORTUDP est le numéro de port sur lequel le client recevra les notifications UDP du serveur,
-CLE correspond à la clef publique du serveur sous forme d’une chaîne de caractères
- */
-typedef struct response_inscription
-{
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 port_udp; // A METTRE EN BE
-	u8 cle[113];
-} resp_inscription;
+/* =========================================================================
+ * RÈGLE GLOBALE : Tous les champs numériques (u16) sont sérialisés en
+ * Big Endian (ordre réseau) via htons()/ntohs() dans serialization.c.
+ * Les champs composites (ex: code + id) sont documentés ci-dessous.
+ * ========================================================================= */
 
-/**
-   CODEREQ = 4,
-IDG est l’identifiant unique strictement positif du groupe attribué par le serveur,
-PORTMDIFF est le numéro de port de multidiffusion du groupe attribué par le serveur,
-IPMDIFF est un entier de 16 octets au format réseaux correspondant à l’adresse IPv6 de
-multidiffusion unique du groupe attribuée par le serveur.
+/* CODEREQ = 2
+ * Réponse d'inscription utilisateur
+ * -> renvoie ID utilisateur + port UDP de notifications + clé publique serveur
  */
-typedef struct response_new_grp
+typedef struct
 {
-	u16 codereq_id; // codereq sur 5bits le reste pour l'id, A METTRE EN BE
-	u16 portmdiff; // A METTRE EN BE
-	u8 ipmdiff[16]; 
-} resp_new_grp;
+	u16 resp_code_user_id; // 5 bits CODEREQ + 11 bits ID utilisateur
+	u16 udp_port;		   // port UDP de réception des notifications
+	u8 server_pub_key[113];
+} resp_register;
 
-/**
-   CODEREQ = 24
+/* CODEREQ = 4
+ * Réponse de création de groupe
+ * -> renvoie ID du groupe + infos de multidiffusion
  */
-typedef struct response_inv_grp
+typedef struct
 {
-	u16 codereq; // codereq sur 5bits le reste à 0, A METTRE EN BE
-} resp_inv_grp;
+	u16 resp_code_group_id; // 5 bits CODEREQ + 11 bits ID groupe
+	u16 mdiff_port;			// port de multidiffusion
+	u8 mdiff_ipv6[16];		// adresse IPv6 de multidiffusion
+} resp_create_group;
 
-/**
-   identifiant du groupe (IDG), la longueur en
-octet du nom du groupe (LEN), le nom du groupe (NOMG) et le nom de l’administrateur·ice
-du groupe (NOM).
+/* CODEREQ = 24
+ * Réponse de validation simple (ACK)
+ * Utilisée pour : confirmer une invitation, une sortie de groupe, etc.
  */
-typedef struct info_group
+typedef struct
 {
-	u16 idg_len; // idg sur 11bits, le reste pour len, A METTRE EN BE
-	u8 *nom_grp; // taille len
-	u8 nom[10]; // admin du groupe
-} info_group;
+	u16 resp_header; // 5 bits CODEREQ (24) + 11 bits à 0 (ZEROS)
+} resp_generic_ack;
 
-/**
-   CODEREQ = 7,
-NB est le nombre d’invitations envoyées au client (qui peut valoir 0),
-puis pour chaque invitation sont envoyées, l’identifiant du groupe (IDGi), la longueur en
-octet du nom du groupe (LENi), le nom du groupe (NOMGi) et le nom de l’administrateur·ice
-du groupe (NOMi).
+/* Élément invitation groupe
+ * -> ID groupe + longueur nom + nom du groupe + nom administrateur
  */
-typedef struct response_list_inv_grp
+typedef struct
 {
-	u16 codereq_nb; // codereq sur 5bits le reste pour nb, A METTRE EN BE
-	info_group *grps; // taille nb
-} resp_list_inv;
+	u16 group_id_name_len; // 11 bits IDG + 5 bits LEN (nom du groupe)
+	u8 *group_name;		   // nom du groupe (taille LEN)
+	u8 admin_name[10];	   // pseudo administrateur (10 octets)
+} resp_group_invitation_info;
 
-/**
-   identifiant (ID) et son nom sur 10octets (NOM).
+/* CODEREQ = 7
+ * Liste des invitations en attente
+ * -> NB invitations + tableau d'invitations
  */
-typedef struct info_person
+typedef struct
 {
-	u16 id; // id sur 11 bits le rest à 0, A METTRE EN BE
-	u8 nom[10];
-} info_person;
+	u16 resp_code_count;					 // 5 bits CODEREQ + 11 bits NB
+	resp_group_invitation_info *invitations; // tableau de taille NB
+} resp_list_invitations;
 
-/**
-   CODEREQ = 9,
-IDG est l’identifiant du groupe,
-PORTMDIFF est le numéro du port de multidiffusion du groupe,
-IPMDIFF est un entier de 16 octets au format réseaux correspondant à l’adresse IPv6 de
-multidiffusion,
-NB est le nombre de membres du groupe,
-puis pour chacun de ces membres sont envoyés, son identifiant (IDi) et son nom sur 10
-octets (NOMi). Les premiers identifiant et nom doivent être celui de l’administrateur·ice du
-groupe.
+/* Élément membre de groupe
+ * -> ID utilisateur + nom
+ * Il faut transmettre cette information à tout les membres d'un groupe et l'admin dès qu'un utilisateur rejoint ou quitte un groupe
  */
-typedef struct response_inv_accept_grp
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 portmdiff; // A METTRE EN BE
-	u8 ipmdiff[16]; // A METTRE EN BE
-	u16 nb_personne; // A METTRE EN BE
-	info_person *list_person; // taille nb_personne
-} resp_inv_accept_grp;
+	u16 user_id; // 11 bits ID + 5 bits à 0
+	u8 name[10]; // pseudo utilisateur (10 octets)
+} resp_user_info;
 
-/**
-   CODEREQ = 24
+/* CODEREQ = 9
+ * Invitation acceptée
+ * -> infos groupe (multidiffusion) + liste des membres
  */
-typedef struct response_quit_decline_grp
+typedef struct
 {
-	u16 codereq; // codereq sur 5bits le reste à 0, A METTRE EN BE
-} resp_quit_decl_grp;
+	u16 resp_code_group_id;	 // 5 bits CODEREQ + 11 bits IDG
+	u16 mdiff_port;			 // port de multidiffusion
+	u8 mdiff_ipv6[16];		 // adresse IPv6 de multidiffusion
+	u16 member_count;		 // nombre de membres
+	resp_user_info *members; // tableau de taille member_count
+} resp_accept_invitation;
 
-/**
-   CODEREQ = 11,
-IDG est l’identifiant du groupe,
-NB est le nombre de membres du groupe,
-puis pour chacun de ces membre sont envoyés, son identifiant (IDi) et son nom sur 10
-octets (NOMi). Les premiers identifiant et nom doivent être celui de l’administrateur·ice du
-groupe.
+/* CODEREQ = 11
+ * Liste des membres d'un groupe (ou tous utilisateurs si group_id = 0 côté requête)
  */
-typedef struct response_list_grp
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 nb_personne; // A METTRE EN BE
-	info_person *list_person; // taille nb_personne
-} resp_list_grp;
+	u16 resp_code_group_id;	 // 5 bits CODEREQ + 11 bits IDG
+	u16 member_count;		 // nombre de membres
+	resp_user_info *members; // tableau de taille member_count
+} resp_list_members;
 
-/**
-   CODEREQ = 13,
-IDG est l’identifiant du groupe,
-NUMB est le numéro du billet attribué par le serveur. Les billets d’un groupe sont numérotées
-de façon incrémentale à partir de 0.
+/* CODEREQ = 13
+ * Accusé de création de billet
+ * -> ID groupe + numéro de billet attribué
  */
-typedef struct response_billet
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 numb; // numb sur 11 bits, le reste à 0, A METTRE EN BE
-} resp_billet;
+	u16 resp_code_group_id; // 5 bits CODEREQ + 11 bits IDG
+	u16 ticket_id;			// 11 bits NUMB + 5 bits à 0
+} resp_post_message;
 
-/**
-   CODEREQ = 15,
-IDG est l’identifiant du groupe,
-NUMB est le numéro du billet auquel l’utilisateur·ice répond,
-NUMR est le numéro de la réponse. Les réponses à un billet sont numérotées de façon
-incrémentale à partir de 1
+/* CODEREQ = 15
+ * Accusé de réponse à un billet
+ * -> ID groupe + couple (NUMB, NUMR)
  */
-typedef struct response_rep_billet
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 numb_numr; // numb sur 11 bits, le reste pour numr, A METTRE EN BE
-} resp_rep_billet;
+	u16 resp_code_group_id; // 5 bits CODEREQ + 11 bits IDG
+	u16 ticket_reply_id;	// 11 bits NUMB + 5 bits NUMR
+} resp_reply_message;
 
-/**
-   identifiant de l’auteur du billet ou de la réponse
-(ID), le numéro du billet (NUMB), le numéro de la réponse (NUMR) qui vaut zéro si ce n’est
-pas une réponse, la longueur en octets du billet ou de la réponse (LEN) et le billet ou la
-réponse (DATA).
+/* Élément billet/réponse
+ * -> auteur + couple (NUMB, NUMR) + longueur + données
  */
-typedef struct info_billet
+typedef struct
 {
-	u16 id; // id sur 11bits le reste à 0, A METTRE EN BE
-	u16 numb_numr; // numb sur 11 bits, le reste pour numr, A METTRE EN BE
-	u16 len; // A METTRE EN BE
-	u8 *data; // taille len
-} info_bilet;
+	u16 author_id;		 // 11 bits ID auteur + 5 bits à 0
+	u16 ticket_reply_id; // 11 bits NUMB + 5 bits NUMR (NUMR=0 si billet)
+	u16 data_len;		 // longueur de data en octets
+	u8 *data;			 // contenu du billet/réponse
+} resp_message_info;
 
-/**
-   CODEREQ = 17,
-IDG est l’identifiant du groupe concerné,
-NB est le nombre de billets qui vont être envoyés au client,
-puis pour chaque billet sont envoyées, l’identifiant de l’auteur du billet ou de la réponse
-(IDi), le numéro du billet (NUMBi), le numéro de la réponse (NUMRi) qui vaut zéro si ce n’est
-pas une réponse, la longueur en octets du billet ou de la réponse (LENi) et le billet ou la
-réponse (DATAi).
+/* CODEREQ = 17
+ * Historique des billets/réponses d'un groupe
+ * -> ID groupe + NB éléments + tableau des billets
  */
-typedef struct response_history_billet
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-	u16 nb; // A METTRE EN BE
-	info_billet *list_billet; // taille nb
-} resp_history_billet;
+	u16 resp_code_group_id;				// 5 bits CODEREQ + 11 bits IDG
+	u16 message_count;					// nombre d'éléments envoyés
+	resp_message_info *message_history; // tableau de taille message_count
+} resp_list_messages;
 
-/**
-   CODEREQ = 31.
+/* CODEREQ = 31
+ * Erreur générique
  */
-typedef struct response_error
+typedef struct
 {
-	u16 codereq; // codereq sur 5bits le reste à 0, A METTRE EN BE
+	u16 resp_code; // 5 bits CODEREQ + 11 bits à 0
 } resp_error;
 
-/**
-- Lorsque le serveur reçoit un nouveau message ou une réponse à poster sur le fil du groupe,
-il notifie les utilisateur·ices du groupe avec CODEREQ = 18,
-– lorsqu’un·e utilisateur·ice accepte une invitation, le serveur notifie les membres du groupe
-avec CODEREQ = 19,
-- lorsqu’un utilisateur·ice quitte le groupe, le serveur notifie les membres du groupe avec
-CODEREQ = 20,
-- lorsque l’administrateur·ice ferme le groupe, le serveur notifie les membres du groupe avec
-CODEREQ = 21.
-– lorsqu’il reçoit une invitation destinée à un·e utilisateur·ice, il envoie une notification d’in-
-vitation à cet·te utilisateur·ice avec CODEREQ = 22,
-– lorsqu’un utilisateur·ice récupère un billet, l’utilisateur·ice qui a écrit le billet est notifié·e
-avec CODEREQ = 23,
+/* Notifications serveur (CODEREQ = 18..23)
+ * 18: nouveau billet/réponse, 19: invitation acceptée,
+ * 20: membre quitte, 21: groupe fermé,
+ * 22: nouvelle invitation reçue, 23: billet récupéré.
  */
-typedef struct notif_groupe
+typedef struct
 {
-	u16 codereq_idg; // codereq sur 5bits le reste pour l'idg, A METTRE EN BE
-} notif_grp;
+	u16 notif_code_group_id; // 5 bits CODEREQ + 11 bits IDG
+} resp_group_notification;
+
+/* Fonctions de préparation des réponses */
+void prepare_register_resp(resp_register *resp, int user_id, int udp_port);
+
+void prepare_group_resp(resp_create_group *resp, int group_id, int mdiff_port, const u8 *mdiff_addr);
+
+void prepare_ack_resp(resp_generic_ack *resp);
+
+/* CODEREQ = 7 : liste des invitations */
+void init_list_invitations_resp(resp_list_invitations *resp, int count);
+
+void set_invitation_item_resp(resp_list_invitations *resp, int index, int group_id, u8 name_len, const u8 *group_name, const u8 *admin_name);
+
+/* CODEREQ = 9 : invitation acceptée */
+void init_accept_invitation_resp(resp_accept_invitation *resp, int group_id, u16 mdiff_port, const u8 *mdiff_ipv6, int member_count);
+
+void set_accept_invitation_member(resp_accept_invitation *resp, int index, int member_id, const u8 *member_name);
+
+/* CODEREQ = 11 : liste des membres */
+void init_list_members_resp(resp_list_members *resp, int group_id, int member_count);
+
+void set_list_member_resp(resp_list_members *resp, int index, int member_id, const u8 *member_name);
+
+/* CODEREQ = 13 et 15 : accusés de billet/réponse */
+void prepare_post_message_resp(resp_post_message *resp, int group_id, int ticket_id);
+
+void prepare_reply_message_resp(resp_reply_message *resp, int group_id, int ticket_id, int reply_id);
+
+/* CODEREQ = 17 : historique des billets */
+void init_list_messages_resp(resp_list_messages *resp, int group_id, int message_count);
+
+void set_list_message_item(resp_list_messages *resp, int index, int author_id, int ticket_id, int reply_id, const u8 *data, u16 data_len);
+
+/* CODEREQ = 18..23 : notifications serveur */
+void prepare_notification_resp(resp_group_notification *resp, int notif_code, int group_id);
 
 #endif

@@ -1,9 +1,13 @@
 .o
 .obj
-objs/
+client
+server
+obj/
 .cache
 .vscode/
 .idea/
 *.swp
 .DS_Store
 Thumbs.db
+/bin/
+/build/

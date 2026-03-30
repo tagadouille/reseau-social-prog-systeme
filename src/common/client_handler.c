@@ -4,11 +4,12 @@
 
 #include "client_handler.h"
 
-void * handle(void * arg) {
-    int client_socket = *(int *) arg;
+void *handle(void *arg)
+{
+    int client_socket = *(int *)arg;
     free(arg);
 
-    //TODO: Handle client communication here
+    // TODO: Handle client communication here
 
     close(client_socket);
     return NULL;
