@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "serialization.h"
-#include "utils.h"
-#include "request.h"
-#include "protocol.h"
+#include "../../includes/serialization.h"
+#include "../../includes/utils.h"
+#include "../../includes/request.h"
+#include "../../includes/protocol.h"
 
 /*
  * Convention de sécurité dans ce fichier :

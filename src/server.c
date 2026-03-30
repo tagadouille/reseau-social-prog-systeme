@@ -6,9 +6,9 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "server.h"
-#include "thread_array.h"
-#include "client_handler.h"
+#include "../includes/server.h"
+#include "../includes/thread_array.h"
+#include "../includes/client_handler.h"
 
 /**
  * @brief Configures the server by creating a socket,

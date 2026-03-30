@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "thread_array.h"
+#include "../../includes/thread_array.h"
 
 thread_array_t *thread_array_init(size_t initial_capacity)
 {
