@@ -103,20 +103,38 @@ int main()
             goto error;
         }
 
+	printf("Attente de connexion\n");
+
         // Accept an incoming connection :
         *client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
+	printf("Connexion reçu\n");
+	
         if (*client_fd == -1)
         {
             perror("accept server");
             goto error;
         }
 
-        if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
+	handle_wrapper_t *wrapper;
+	wrapper = malloc(sizeof(handle_wrapper_t));
+	if (!wrapper)
+	{
+		perror("malloc wrapper");
+		close(*client_fd);
+		free(client_fd);
+		goto error;
+	}
+	wrapper->client_addr = &client_addr;
+	wrapper->client_sock = *client_fd;
+	wrapper->len = client_addr_len;
+	
+        if (pthread_create(&thread_array->threads[nb_client], NULL, handle, wrapper) != 0)
         {
             perror("pthread_create server");
             close(*client_fd);
             free(client_fd);
+	    free(wrapper);
             goto error;
         }
 
