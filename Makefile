@@ -9,12 +9,12 @@ CLIENT_EXEC := client
 SERVER_EXEC := server
 
 # --- OPTIONS ---
-CFLAGS := -I $(INC_DIR) -Wall -Wextra -Werror -g
+CFLAGS := -I $(INC_DIR) -Wall -Wextra -Werror -g -MMD -MP
 
 # --- FICHIERS ---
-# On récupère tout ce qui est commun
-COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.c)
-HEADERS := $(wildcard $(INC_DIR)/*.h)
+# On récupère tout ce qui est commun sauf client.c et server.c
+COMMON_SRC := $(filter-out $(SRC_DIR)/client.c $(SRC_DIR)/server.c, \
+               $(shell find $(SRC_DIR) -name "*.c"))
 
 # Sources spécifiques
 CLIENT_SRC := $(SRC_DIR)/client.c $(COMMON_SRC)
@@ -37,9 +37,11 @@ $(SERVER_EXEC): $(SERVER_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Règle générique pour les objets dans le dossier obj/
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(CLIENT_OBJ:.o=.d) $(SERVER_OBJ:.o=.d)
 
 .PHONY: clean re
 

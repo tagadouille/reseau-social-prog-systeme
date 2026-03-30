@@ -9,6 +9,7 @@
 #include "server.h"
 #include "thread_array.h"
 #include "client_handler.h"
+#include "log.h"
 
 /**
  * @brief Configures the server by creating a socket,
@@ -67,7 +68,9 @@ error:
 int main()
 {
 
+    log_server("Server started, configuring...");
     int socket_fd = server_config();
+    log_server("Server configured, waiting for connections...");
 
     short ret = EXIT_FAILURE;
 
@@ -77,6 +80,7 @@ int main()
     {
         goto error;
     }
+    log_server("Thread array initialized with capacity %zu", thread_array->capacity);
 
     size_t nb_client = 0;
 
@@ -86,6 +90,7 @@ int main()
         // resize the thread array :
         if (nb_client >= thread_array->capacity)
         {
+            log_server("Thread array resized with capacity %zu", thread_array->capacity);
             if (thread_array_resize(thread_array) == NULL)
             {
                 goto error;
@@ -103,6 +108,8 @@ int main()
             goto error;
         }
 
+        log_server("Accepting a new client..");
+
         // Accept an incoming connection :
         *client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
@@ -111,6 +118,8 @@ int main()
             perror("accept server");
             goto error;
         }
+
+        log_server("Client accepted with socket ID %d\n thread in creation..", *client_fd);
 
         if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
         {
