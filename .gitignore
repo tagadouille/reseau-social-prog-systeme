@@ -11,3 +11,5 @@ obj/
 Thumbs.db
 /bin/
 /build/
+server.log
+client.log
