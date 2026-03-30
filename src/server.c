@@ -116,25 +116,11 @@ int main()
             goto error;
         }
 
-	handle_wrapper_t *wrapper;
-	wrapper = malloc(sizeof(handle_wrapper_t));
-	if (!wrapper)
-	{
-		perror("malloc wrapper");
-		close(*client_fd);
-		free(client_fd);
-		goto error;
-	}
-	wrapper->client_addr = &client_addr;
-	wrapper->client_sock = *client_fd;
-	wrapper->len = client_addr_len;
-	
-        if (pthread_create(&thread_array->threads[nb_client], NULL, handle, wrapper) != 0)
+        if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
         {
             perror("pthread_create server");
             close(*client_fd);
             free(client_fd);
-	    free(wrapper);
             goto error;
         }
 

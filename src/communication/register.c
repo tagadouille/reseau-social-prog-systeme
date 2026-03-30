@@ -23,8 +23,9 @@ void read_rep_register(u8 *buf, resp_register *response)
 	int current_pos = 0;
 	uint16_t id;
 	memcpy(&id, buf, 2);
-	id = (id & MASK_11_BITS);
 	id = ntohs(id);
+	id = (id & MASK_11_BITS);
+	current_pos += 2;
 
 	// On reçoit le port udp en BE donc on le reconstruit en LE pour le coté client
 	u16 udp_port;

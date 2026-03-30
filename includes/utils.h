@@ -33,5 +33,6 @@ typedef uint64_t u64;
 int recv_all(int sock, char *buf, int len);
 int send_all(int sock, const char *buf, int len);
 
+int read_codereq(int sock, u8 *buf_header);
 
 #endif
