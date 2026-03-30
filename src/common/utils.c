@@ -58,3 +58,15 @@ int send_all(int sock, const char *buf, int len)
     }
     return sent;
 }
+
+int read_codereq(int sock, u8 *buf_header)
+{
+    if (recv_all(sock, (char *)buf_header, 2) < 0)
+        return -1;
+
+    uint16_t code;
+    memcpy(&code, buf_header, 2);
+    code = ntohs(code);
+
+    return (code >> 11) & 0x1F; // 5 bits de tête
+}
