@@ -15,11 +15,12 @@ CFLAGS := -I $(INC_DIR) -Wall -Wextra -Werror -g
 # On récupère tout ce qui est commun
 COMMON_SRC := $(wildcard $(SRC_DIR)/common/*.c)
 COMMUNICATION_SRC := $(wildcard $(SRC_DIR)/communication/*.c)
+STORAGE_SRC := $(wildcard $(SRC_DIR)/storage/*.c)
 HEADERS := $(wildcard $(INC_DIR)/*.h)
 
 # Sources spécifiques
-CLIENT_SRC := $(SRC_DIR)/client.c $(COMMON_SRC) $(COMMUNICATION_SRC)
-SERVER_SRC := $(SRC_DIR)/server.c $(COMMON_SRC) $(COMMUNICATION_SRC)
+CLIENT_SRC := $(SRC_DIR)/client.c $(COMMON_SRC) $(COMMUNICATION_SRC) $(STORAGE_SRC)
+SERVER_SRC := $(SRC_DIR)/server.c $(COMMON_SRC) $(COMMUNICATION_SRC) $(STORAGE_SRC)
 
 # Transformation magique : src/chemin/fichier.c -> obj/chemin/fichier.o
 CLIENT_OBJ := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(CLIENT_SRC))
