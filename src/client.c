@@ -35,7 +35,6 @@ int main()
 		close(sock);
 		exit(1);
 	}
-
 	
 	char name[10];
 	snprintf(name, sizeof(name), "testuser");
@@ -65,7 +64,7 @@ int main()
 	printf("En attente de la réponse du serveur...\n");
 	if (recv_all(sock, (char *)recv_buf, SIZE_RESP_REGISTER) < 0)
 	{
-		fprintf(stderr, "Erreur lors de la réception\n");
+		perror("recv_all");
 		free(recv_buf);
 		close(sock);
 		exit(1);
@@ -85,7 +84,7 @@ int main()
 	int udp_port = response->udp_port;
 
 	printf("=== Réponse du serveur ===\n");
-	printf("  ID attribué  : %d\n", user_id);
+	printf("  ID attribuée  : %d\n", user_id);
 	printf("  Port UDP     : %d\n", udp_port);
 	free(response);
 	free(recv_buf);
@@ -102,6 +101,7 @@ ssize_t generate_register_request(u8 *buf, char name[10])
         /* Création de la requête */
 
 	req_register *request = malloc(sizeof(req_register));
+
 	if (!request)
 	{
 		perror("malloc request");
