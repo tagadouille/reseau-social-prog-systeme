@@ -68,7 +68,7 @@ int handle_register(int sock, u8 *buf_header)
 
 	if (recv_all(sock, (char *)rest, remaining) < 0)
 	{
-		fprintf(stderr, "Erreur lecture corps register\n");
+	        perror("erreur lecture corps register");
 		return -1;
 	}
 
@@ -94,13 +94,13 @@ int handle_register(int sock, u8 *buf_header)
 	ssize_t len = build_register_resp(resp_buf, &response);
 	if (len < 0)
 	{
-		fprintf(stderr, "Erreur construction réponse register\n");
+		perror("erreur construction réponse register");
 		return -1;
 	}
 
 	if (send_all(sock, (char *)resp_buf, len) < 0)
 	{
-		fprintf(stderr, "Erreur envoi réponse register\n");
+		perror("erreur envoi réponse register");
 		return -1;
 	}
 
