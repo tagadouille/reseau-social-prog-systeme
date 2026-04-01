@@ -6,8 +6,16 @@
 
 #include "../../includes/user_storage.h"
 
-#define MAX_LEN_PATH 256
 
+/**
+ * Permet d'écrire les informations dans le fichier 'path'.
+ * ├── 0
+ *     ├── key         ici 0 est l'identifiant de l'utilisateur enregistré
+ *     ├── name
+ *     └── udp_port
+ *
+ * RETURN VALUE: -1 si problème d'appel système (voir perror), 0 sinon
+ */
 int store_user(int id, const char *name, int udp_port, const char *key, const char *path)
 {
 	mkdir(path, 0755); // s'il n'existe pas déjà
@@ -74,6 +82,11 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 	return 0;
 }
 
+/**
+ * Permet de déterminer un identifiant non utilisé dans le répertoire 'path'. En admettant que le répertoire
+ * contient uniquement des sous-répertoires nommés par des entiers positifs.
+ * RETURN VALUE: -1 si aucun id possible, l'id disponible sinon.
+ */
 int find_id(const char *path)
 {
 	mkdir(path, 0755); // s'il n'existe pas déjà
@@ -89,6 +102,7 @@ int find_id(const char *path)
 			return id;
 		id++;
 	}
+	return -1;
 }
 
 

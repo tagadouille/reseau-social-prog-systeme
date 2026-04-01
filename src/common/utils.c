@@ -59,6 +59,10 @@ int send_all(int sock, const char *buf, int len)
     return sent;
 }
 
+/**
+ * Permet de recevoir le codereq d'une requête venant de 'sock' en utilisant 'buf_header'
+ * RETURN VALUE: -1 si problème dans recv_all, codereq sinon
+ */
 int read_codereq(int sock, u8 *buf_header)
 {
 	if (recv_all(sock, (char *)buf_header, 2) < 0)

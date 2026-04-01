@@ -2,6 +2,7 @@
 #define USER_STORAGE_H
 
 #define USER_PATH "./usertest"
+#define MAX_LEN_PATH 256
 
 int store_user(int id, const char *name, int udp_port, const char *key, const char *path);
 int find_id(const char *path);

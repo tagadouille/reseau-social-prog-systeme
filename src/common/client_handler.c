@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -11,10 +10,7 @@
 #include "../../includes/protocol.h"
 #include "../../includes/request.h"
 #include "../../includes/register.h"
-
-#define PORT_UDP 12580
-
-int handle_register(int sock,  u8 *buf_header);
+#include "../../includes/user_storage.h"
 
 void *handle(void *arg)
 {
@@ -26,7 +22,7 @@ void *handle(void *arg)
 	int codereq = read_codereq(sock, buf);
 	if (codereq < 0)
 	{
-		fprintf(stderr, "Erreur lecture CODEREQ\n");
+		perror("Erreur lecture CODEREQ");
 		goto cleanup;
 	}
 
@@ -40,13 +36,13 @@ void *handle(void *arg)
 		break;
 
         default:
-		fprintf(stderr, "CODEREQ inconnu : %d\n", codereq);
+		perror("CODEREQ inconnu");
 		ret = -1;
 		break;
 	}
 
 	if (ret < 0)
-		fprintf(stderr, "Erreur dans le handler (codereq=%d)\n", codereq);
+		perror("Erreur dans le handler");
 
 cleanup:
 	close(sock);
@@ -82,7 +78,14 @@ int handle_register(int sock, u8 *buf_header)
 
 	printf("Inscription de : %s\n", request.username);
 
-	int user_id = 1;
+	int user_id = find_id(USER_PATH);
+
+	int r = store_user(user_id,(char *) request.username, PORT_UDP, (char *)request.pub_key, USER_PATH);
+	if (r == -1)
+	{
+		perror("error store user");
+		return -1;
+	}
 
 	resp_register response;
 	memset(&response, 0, sizeof(response));

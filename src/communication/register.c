@@ -2,6 +2,9 @@
 #include <netinet/in.h>
 #include <string.h>
 
+/**
+ * Permet de lire le format d'une requête d'inscription sur une chaîne d'u8 'buf' et de remplir la structure req_register 'request'
+ */
 void read_register(u8 *buf, req_register *request)
 {
 	int current_pos = 2; // 2 car codereq déjà lu
@@ -18,6 +21,9 @@ void read_register(u8 *buf, req_register *request)
 	prepare_register_req(request, username);
 }
 
+/**
+ * Permet de lire le format d'une réponse d'inscription sur une chaîne d'u8 'buf' et de remplir la structure resp_register 'response'
+ */
 void read_rep_register(u8 *buf, resp_register *response)
 {
 	int current_pos = 0;
