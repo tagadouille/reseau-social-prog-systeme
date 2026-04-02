@@ -129,7 +129,7 @@ int handle_create_group(int sock, u8 *buf_header)
 
 	if (recv_all(sock, (char *)rest, remaining) < 0)
 	{
-	        perror("erreur lecture corps création groupe");
+	    perror("erreur lecture corps création groupe");
 		return -1;
 	}
 
@@ -139,7 +139,7 @@ int handle_create_group(int sock, u8 *buf_header)
 
 	req_register request;
 	memset(&request, 0, sizeof(request));
-	read_register(full_buf, &request);
+	read_register(full_buf, &request); // TODO CREATE GROUP
 
 	printf("Création du groupe de : %s\n", request.username);
 

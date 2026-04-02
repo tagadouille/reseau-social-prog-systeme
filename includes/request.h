@@ -112,6 +112,7 @@ typedef struct
  */
 
 #define SIZE_REQ_REGISTER 125
+#define SIZE_REQ_CREATE_GROUP 1024 // On ne sait pas à l'avance la taille de la requête, d'où cette valeur
 
 void prepare_register_req(req_register *req, const char *username);
 
