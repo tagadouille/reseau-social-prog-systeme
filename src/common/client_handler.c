@@ -32,8 +32,11 @@ void *handle(void *arg)
 	switch (codereq)
 	{
         case REQ_REGISTER:
-		ret = handle_register(sock, buf);
-		break;
+			ret = handle_register(sock, buf);
+			break;
+		case REQ_CREATE_GROUP:
+			ret = handle_create_group(sock, buf);
+			break;
 
         default:
 		perror("CODEREQ inconnu");
@@ -104,6 +107,73 @@ int handle_register(int sock, u8 *buf_header)
 	if (send_all(sock, (char *)resp_buf, len) < 0)
 	{
 		perror("erreur envoi réponse register");
+		return -1;
+	}
+
+	printf("Réponse envoyée : ID=%d, UDP_PORT=%d\n", user_id, 12580);
+	return 0;
+}
+
+/**
+ * @brief Fonction pour gérer le cas d'une requête de création de groupe, en deux étapes
+ * on lit et on reconstruit la requête dans 'buf_header' sur le serveur,
+ * On la traite et on produit une réponse en suivant le protocole pour l'envoyer au client 'sock'
+ * RETURN VALUE: -1 si problème de lecture ou construction de la requête et réponse sinon 0.
+ */
+int handle_create_group(int sock, u8 *buf_header)
+{
+	int remaining = SIZE_REQ_REGISTER - 2;
+
+	u8 rest[remaining];
+	memset(rest, 0, sizeof(rest));
+
+	if (recv_all(sock, (char *)rest, remaining) < 0)
+	{
+	        perror("erreur lecture corps création groupe");
+		return -1;
+	}
+
+	u8 full_buf[SIZE_REQ_REGISTER];
+	memcpy(full_buf, buf_header, 2);
+	memcpy(full_buf + 2, rest, remaining);
+
+	req_register request;
+	memset(&request, 0, sizeof(request));
+	read_register(full_buf, &request);
+
+	printf("Création du groupe de : %s\n", request.username);
+
+	// Stockage du groupe :
+
+	int user_id = find_id(USER_PATH);
+
+	int r = store_user(user_id,(char *) request.username, PORT_UDP, (char *)request.pub_key, USER_PATH);
+	if (r == -1)
+	{
+		perror("error store user");
+		return -1;
+	}
+
+	// Préparation de la réponse :
+
+	resp_create_group response;
+	memset(&response, 0, sizeof(response));
+	prepare_group_resp(&response, int group_id, int mdiff_port, const u8 *mdiff_addr);
+
+	u8 resp_buf[SIZE_RESP_CREATE_GROUP];
+	memset(resp_buf, 0, sizeof(resp_buf));
+
+	ssize_t len = build_group_resp(resp_buf, &response);
+
+	if (len < 0)
+	{
+		perror("erreur construction réponse création groupe");
+		return -1;
+	}
+
+	if (send_all(sock, (char *)resp_buf, len) < 0)
+	{
+		perror("erreur envoi réponse création groupe");
 		return -1;
 	}
 

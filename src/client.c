@@ -16,8 +16,13 @@
 req_register *prepare_request(u8 name[10], u8 key[113]);
 ssize_t generate_register_request(u8 *buf, char name[10]);
 
-int main()
+int main(int argc, char *argv[])
 {
+	// Prise en charge temporaire des arguments :
+	if(argc != 2)
+	{
+		dprintf(2, "Il faut mettre un argument. Soit g pour créer un groupe, soit u pour un utilisateur\n");
+	}
 	/* Initialisation de la socket client */
 	int sock;
 	sock = socket(PF_INET6, SOCK_STREAM, 0);
@@ -36,6 +41,61 @@ int main()
 		exit(1);
 	}
 	
+	if(strcmp(argv[1], "u") == 0)
+	{
+		test_register(sock);
+	}
+	else if(strcmp(argv[1], "g") == 0)
+	{
+		test_create_group(sock);
+	}
+	else{
+		dprintf(2, "Argument invalide, c'est soit g pour créer un groupe, soit u pour un utilisateur.\n");
+	}
+	
+	close(sock);
+	return 0;
+}
+
+/**
+ * Permet de créer la requête pour qu'un client s'inscrive, 'buf' est la chaine ou on met la requête et 'name' le nom de l'utilisateur.
+ * RETURN VALUE : -1 si problème de malloc ou build_register_req sinon renvoit la taille du message.
+ */
+ssize_t generate_register_request(u8 *buf, char name[10])
+{
+        /* Création de la requête */
+
+	req_register *request = malloc(sizeof(req_register));
+
+	if (!request)
+	{
+		perror("malloc request");
+		return -1;
+	}
+
+	prepare_register_req(request, name);
+
+	ssize_t len = build_register_req(buf, request);
+	if (len < 0)
+	{
+		perror("build_register_req");
+		free(buf);
+		free(request);
+		return -1;
+	}
+
+	/* Log pour voir la requête envoyé */
+	int fd = open("./bin/output_inscription.bin", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	write(fd, buf, SIZE_REQ_REGISTER);
+	close(fd);
+	return len;
+}
+
+/**
+ * @brief test temporaire de l'inscription d'un client
+ */
+void test_register(int sock)
+{
 	char name[10];
 	snprintf(name, sizeof(name), "testuser");
 
@@ -88,40 +148,4 @@ int main()
 	printf("  Port UDP     : %d\n", udp_port);
 	free(response);
 	free(recv_buf);
-	close(sock);
-	return 0;
-}
-
-/**
- * Permet de créer la requête pour qu'un client s'inscrive, 'buf' est la chaine ou on met la requête et 'name' le nom de l'utilisateur.
- * RETURN VALUE : -1 si problème de malloc ou build_register_req sinon renvoit la taille du message.
- */
-ssize_t generate_register_request(u8 *buf, char name[10])
-{
-        /* Création de la requête */
-
-	req_register *request = malloc(sizeof(req_register));
-
-	if (!request)
-	{
-		perror("malloc request");
-		return -1;
-	}
-
-	prepare_register_req(request, name);
-
-	ssize_t len = build_register_req(buf, request);
-	if (len < 0)
-	{
-		perror("build_register_req");
-		free(buf);
-		free(request);
-		return -1;
-	}
-
-	/* Log pour voir la requête envoyé */
-	int fd = open("./bin/output_inscription.bin", O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	write(fd, buf, SIZE_REQ_REGISTER);
-	close(fd);
-	return len;
 }

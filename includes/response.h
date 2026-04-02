@@ -158,6 +158,7 @@ typedef struct
  */
 
 #define SIZE_RESP_REGISTER 117
+#define SIZE_RESP_CREATE_GROUP 20
 
 /* Fonctions de préparation des réponses */
 void prepare_register_resp(resp_register *resp, int user_id, int udp_port);
