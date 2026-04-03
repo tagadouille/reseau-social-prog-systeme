@@ -1,5 +1,127 @@
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "../includes/utils.h"
+#include "../includes/server.h"
+#include "../includes/register.h"
+
+req_register *prepare_request(u8 name[10], u8 key[113]);
+ssize_t generate_register_request(u8 *buf, char name[10]);
+
 int main()
 {
-    // TODO: Code client
-    return 0;
+	/* Initialisation de la socket client */
+	int sock;
+	sock = socket(PF_INET6, SOCK_STREAM, 0);
+	if (sock < 0) exit(1);
+
+	struct sockaddr_in6 address_sock;
+	memset(&address_sock, 0, sizeof(address_sock));
+	address_sock.sin6_family = AF_INET6;
+	address_sock.sin6_port = htons(PORT);
+	inet_pton(AF_INET6, ADRESSE_IPV6, &address_sock.sin6_addr);
+
+	if (connect(sock, (struct sockaddr *)&address_sock, sizeof(address_sock)) == -1)
+	{
+		perror("echec de la connexion");
+		close(sock);
+		exit(1);
+	}
+	
+	char name[10];
+	snprintf(name, sizeof(name), "testuser");
+
+	u8 *send_buf = malloc(SIZE_REQ_REGISTER);
+	if (!send_buf) {
+		perror("malloc send_buf");
+		exit(1);
+	}
+
+	ssize_t len = generate_register_request(send_buf, name);
+
+	printf("Requete : %s\n", send_buf);
+	printf("Envoi de la requête d'inscription (%zd octets)\n", len);
+	send_all(sock, (char *)send_buf, len);
+	free(send_buf);
+
+	/* Reception et affichage de la réponse du serveur */
+	u8 *recv_buf = malloc(SIZE_RESP_REGISTER);
+	if (!recv_buf) {
+		perror("malloc recv_buf");
+		close(sock);
+		exit(1);
+	}
+	memset(recv_buf, 0, SIZE_RESP_REGISTER);
+
+	printf("En attente de la réponse du serveur...\n");
+	if (recv_all(sock, (char *)recv_buf, SIZE_RESP_REGISTER) < 0)
+	{
+		perror("recv_all");
+		free(recv_buf);
+		close(sock);
+		exit(1);
+	}
+
+	resp_register *response = malloc(sizeof(resp_register));
+	if (!response) {
+		perror("malloc response");
+		free(recv_buf);
+		close(sock);
+		exit(1);
+	}
+
+	read_rep_register(recv_buf, response);
+
+	int user_id  = response->resp_code_user_id & MASK_11_BITS;
+	int udp_port = response->udp_port;
+
+	printf("=== Réponse du serveur ===\n");
+	printf("  ID attribuée  : %d\n", user_id);
+	printf("  Port UDP     : %d\n", udp_port);
+	free(response);
+	free(recv_buf);
+	close(sock);
+	return 0;
+}
+
+/**
+ * Permet de créer la requête pour qu'un client s'inscrive, 'buf' est la chaine ou on met la requête et 'name' le nom de l'utilisateur.
+ * RETURN VALUE : -1 si problème de malloc ou build_register_req sinon renvoit la taille du message.
+ */
+ssize_t generate_register_request(u8 *buf, char name[10])
+{
+        /* Création de la requête */
+
+	req_register *request = malloc(sizeof(req_register));
+
+	if (!request)
+	{
+		perror("malloc request");
+		return -1;
+	}
+
+	prepare_register_req(request, name);
+
+	ssize_t len = build_register_req(buf, request);
+	if (len < 0)
+	{
+		perror("build_register_req");
+		free(buf);
+		free(request);
+		return -1;
+	}
+
+	/* Log pour voir la requête envoyé */
+	int fd = open("./bin/output_inscription.bin", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	write(fd, buf, SIZE_REQ_REGISTER);
+	close(fd);
+	return len;
 }

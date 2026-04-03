@@ -6,10 +6,9 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "server.h"
-#include "thread_array.h"
-#include "client_handler.h"
-#include "log.h"
+#include "../includes/server.h"
+#include "../includes/thread_array.h"
+#include "../includes/client_handler.h"
 
 /**
  * @brief Configures the server by creating a socket,
@@ -113,6 +112,8 @@ int main()
         // Accept an incoming connection :
         *client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
+        log_server("Client connection accepted, socket ID: %d", *client_fd);
+
         if (*client_fd == -1)
         {
             perror("accept server");
@@ -139,7 +140,7 @@ int main()
 
     ret = EXIT_SUCCESS;
 
-error:   
+error:
     thread_array_destroy(thread_array);
     close(socket_fd);
 

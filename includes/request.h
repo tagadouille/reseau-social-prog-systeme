@@ -107,6 +107,12 @@ typedef struct
    u16 last_ticket_reply_id; // 11 bits NUMB + 5 bits NUMR
 } req_list_messages;
 
+/*
+ * Taille des requêtes pour savoir combien d'octets on doit lire pour une requête précise
+ */
+
+#define SIZE_REQ_REGISTER 125
+
 void prepare_register_req(req_register *req, const char *username);
 
 void prepare_group_req(req_create_group *req, int ID, const char *NOMG);
