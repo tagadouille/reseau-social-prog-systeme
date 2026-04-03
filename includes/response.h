@@ -153,6 +153,12 @@ typedef struct
 	u16 notif_code_group_id; // 5 bits CODEREQ + 11 bits IDG
 } resp_group_notification;
 
+/*
+ * Taille des reponses du serveur pour savoir combien d'octets on doit lire pour une requête précise
+ */
+
+#define SIZE_RESP_REGISTER 117
+
 /* Fonctions de préparation des réponses */
 void prepare_register_resp(resp_register *resp, int user_id, int udp_port);
 

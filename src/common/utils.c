@@ -1,8 +1,9 @@
-#include "utils.h"
 #include <string.h>
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <sys/socket.h>
+
+#include "../../includes/utils.h"
 
 /*
  * Lit exactement 'len' octets sur le réseau.
@@ -56,4 +57,20 @@ int send_all(int sock, const char *buf, int len)
         sent += n;
     }
     return sent;
+}
+
+/**
+ * Permet de recevoir le codereq d'une requête venant de 'sock' en utilisant 'buf_header'
+ * RETURN VALUE: -1 si problème dans recv_all, codereq sinon
+ */
+int read_codereq(int sock, u8 *buf_header)
+{
+	if (recv_all(sock, (char *)buf_header, 2) < 0)
+		return -1;
+
+	uint16_t code;
+	memcpy(&code, buf_header, 2);
+	code = ntohs(code);
+
+	return (code >> 11) & MASK_5_BITS; 
 }

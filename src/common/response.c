@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "response.h"
-#include "protocol.h"
+#include "../../includes/response.h"
+#include "../../includes/protocol.h"
 
 /*
  * ============================================================================

@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "request.h"
-#include "protocol.h"
+#include "../../includes/request.h"
+#include "../../includes/protocol.h"
 
 /*
  * Ce fichier prépare les structures de requêtes côté client.
