@@ -5,11 +5,28 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 
-#include "../includes/server.h"
-#include "../includes/thread_array.h"
-#include "../includes/client_handler.h"
+#include "server.h"
+#include "thread_array.h"
+#include "client_handler.h"
+#include "log.h"
 
+void sig_handler(int signum);
+
+int is_terminated = 0;
+
+static void signal_hijack()
+{
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sig_handler;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
+    sigaction(SIGHUP, &sa, NULL);
+}
 /**
  * @brief Configures the server by creating a socket,
  * setting socket options, binding to a port,
@@ -67,7 +84,10 @@ error:
 int main()
 {
 
+    log_server("\n\n-----------SERVER STARTED----------\n server socket configuring...");
     int socket_fd = server_config();
+    signal_hijack();
+    log_server("Server configured, waiting for connections...");
 
     short ret = EXIT_FAILURE;
 
@@ -77,6 +97,7 @@ int main()
     {
         goto error;
     }
+    log_server("Thread array initialized with capacity %zu", thread_array->capacity);
 
     size_t nb_client = 0;
 
@@ -86,6 +107,7 @@ int main()
         // resize the thread array :
         if (nb_client >= thread_array->capacity)
         {
+            log_server("Thread array resized with capacity %zu", thread_array->capacity);
             if (thread_array_resize(thread_array) == NULL)
             {
                 goto error;
@@ -103,40 +125,59 @@ int main()
             goto error;
         }
 
-	printf("Attente de connexion\n");
+        log_server("Accepting a new client..");
 
         // Accept an incoming connection :
         *client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
-	printf("Connexion reçu\n");
-	
         if (*client_fd == -1)
         {
+            if(is_terminated) {
+                log_server("Server is shutting down, stopping accept loop.");
+                free(client_fd);
+                break;
+            }
             perror("accept server");
             goto error;
         }
 
+        log_server("Client accepted with socket ID %d\n thread in creation..", *client_fd);
+
         if (pthread_create(&thread_array->threads[nb_client], NULL, handle, client_fd) != 0)
         {
-            perror("pthread_create server");
+            if(is_terminated) {
+                log_server("Server is shutting down, stopping thread creation.");
+                ret = EXIT_SUCCESS;
+            }
+            else
+            {
+                perror("pthread_create server");
+            }
             close(*client_fd);
             free(client_fd);
-            goto error;
+            goto thread_clean;
         }
 
         nb_client++;
     }
 
+    ret = EXIT_SUCCESS;
+
+    thread_clean:
     for (size_t i = 0; i < thread_array->count; i++)
     {
         pthread_join(thread_array->threads[i], NULL);
     }
 
-    ret = EXIT_SUCCESS;
-
-error:   
+    error:   
     thread_array_destroy(thread_array);
     close(socket_fd);
 
     exit(ret);
+}
+
+void sig_handler(int signum)
+{
+    log_server("Signal %d received, shutting down server...", signum);
+    is_terminated = 1;
 }
