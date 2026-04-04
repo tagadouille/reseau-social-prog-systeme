@@ -83,3 +83,17 @@ int read_id(u8 * buffer) {
 
     return id;
 }
+
+
+char *IPV6_addr_to_string(uint8_t *addr) {
+    
+    char *str = malloc(INET6_ADDRSTRLEN);
+    if (!str) return NULL;
+
+    if (inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN) == NULL) {
+        free(str);
+        return NULL;
+    }
+
+    return str;
+}

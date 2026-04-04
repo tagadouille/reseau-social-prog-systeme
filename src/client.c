@@ -12,7 +12,7 @@
 #include "../includes/utils.h"
 #include "../includes/server.h"
 #include "../includes/register.h"
-#include "../includes/create_group.h"
+#include "communication/create_group.h"
 
 req_register *prepare_request(u8 name[10], u8 key[113]);
 ssize_t generate_register_request(u8 *buf, char name[10]);
@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 	if(argc != 2)
 	{
 		dprintf(2, "Il faut mettre un argument. Soit g pour créer un groupe, soit u pour un utilisateur\n");
+		exit(EXIT_FAILURE);
 	}
 	/* Initialisation de la socket client */
 	int sock;
@@ -192,7 +193,7 @@ void test_create_group(int sock)
 {
 	int ID = 1;
 
-	u8 *send_buf = malloc(SIZE_REQ_CREATE_GROUP);
+	u8 *send_buf = malloc(512);
 
 	if (!send_buf) {
 		perror("malloc send_buf");

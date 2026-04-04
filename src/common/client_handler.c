@@ -12,9 +12,9 @@
 #include "../../includes/request.h"
 #include "../../includes/register.h"
 #include "../../includes/user_storage.h"
-#include "../../includes/create_group.h"
+#include "communication/create_group.h"
 #include "storage/group_storage.h"
-#include "../../includes/log.h"
+#include "log.h"
 
 /**
  * @brief Fonction pour gérer le cas d'une requête de création de groupe, en deux étapes
@@ -24,32 +24,25 @@
  */
 static int handle_create_group(int sock, u8 *buf_header)
 {
-	int remaining = SIZE_REQ_CREATE_GROUP - 2;
-
-	u8 rest[remaining];
-	memset(rest, 0, sizeof(rest));
-
-	if (recv_all(sock, (char *)rest, remaining) < 0)
-	{
-	    perror("erreur lecture corps création groupe");
-		return -1;
-	}
-
-	u8 full_buf[SIZE_REQ_CREATE_GROUP];
-	memcpy(full_buf, buf_header, 2);
-	memcpy(full_buf + 2, rest, remaining);
+	log_server("[handle_create_group]");
 
 	// Création de la requete de création de groupe
 	req_create_group request;
 	memset(&request, 0, sizeof(request));
-	read_create_group(full_buf, &request);
+	
+	if(read_create_group(sock, &request, buf_header) < 0)
+	{
+		return -1;
+	}
 
-	log_server("Création du groupe de l'utilisateur : %s\n", request.req_code_user_id);
+	log_server("Creation of the group of the user will start : %s\n", request.req_code_user_id);
 
 	// Stockage du groupe :
 
-	// Trouver un id de libre :
+	// Trouver un id de groupe libre :
 	int group_id = find_id(GROUP_PATH);
+
+	log_server("Group id found : %s, let's find a free port and address", group_id);
 
 	// Trouver un port et une adresse de libre :
 	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
@@ -64,12 +57,16 @@ static int handle_create_group(int sock, u8 *buf_header)
 
 	free(wrapper);
 
+	log_server("Group id found : %s, let's store the group", group_id);
+
 	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
 	if (r == -1)
 	{
 		perror("error store user");
 		return -1;
 	}
+
+	log_server("Storing finish, create response");
 
 	// Préparation de la réponse :
 
@@ -88,13 +85,17 @@ static int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
+	log_server("Sending the response");
+
 	if (send_all(sock, (char *)resp_buf, len) < 0)
 	{
 		perror("erreur envoi réponse création groupe");
 		return -1;
 	}
 
-	log_server("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR= \n", group_id, mdiff_port); //TODO ADDR LOG
+	char* addr = IPV6_addr_to_string(mdiff_addr);
+	log_server("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR=%s\n", group_id, mdiff_port, addr);
+	free(addr);
 	return 0;
 }
 
@@ -112,7 +113,7 @@ void *handle(void *arg)
 		goto cleanup;
 	}
 
-	printf("CODEREQ reçu : %d\n", codereq);
+	log_server("CODEREQ reçu : %d\n", codereq);
 
 	int ret;
 	switch (codereq)

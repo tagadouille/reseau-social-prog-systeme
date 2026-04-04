@@ -204,7 +204,7 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int is_addr
             if (file_port == diff_wrapper->mdiff_port)
             {
                 diff_wrapper->mdiff_port = 0;
-                log_server("[find_free_mdiff_addr_helper] Le port est déjà utilisée par un groupe, il est donc marquée comme non libre");
+                log_server("[find_free_mdiff_addr_helper] The port is already use by a group");
                 is_port_free = 0;
                 ret = 1;
             }
@@ -268,7 +268,7 @@ diff_wrapper_t *find_free_mdiff_addr_port()
         if(ret -> mdiff_port != 0)
         {
             is_port_good = 1;
-            log_server("Le port %i est libre !", ret -> mdiff_port);
+            log_server("The port %i is free !", ret -> mdiff_port);
         }
 
         // Vérifier si l'adresse est libre :
@@ -279,7 +279,7 @@ diff_wrapper_t *find_free_mdiff_addr_port()
         if(memcmp(ret -> mdiff_addr, addr_cmp, MDIFF_ADDR_SIZE) != 0) 
         {
             is_addr_good = 1;
-            log_server("L'adresse trouvé est libre !");
+            log_server("The address that has been found is free");
         }
         
     } while (free_msg != 0);

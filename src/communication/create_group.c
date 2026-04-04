@@ -1,9 +1,12 @@
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "utils.h"
-#include "create_group.h"
+#include "communication/create_group.h"
 #include "log.h"
+#include "user_storage.h"
 
 /**
  * @brief extrait NOMG du buffer et le renvoie
@@ -12,38 +15,55 @@
  * par la fonction
  * @param len la longueur de NOMG
  */
-static void read_NOMG(u8* buf, char * NOMG, u8 len) {
-
-    size_t loc = 0;
-
-    for (size_t i = 3; i < (size_t) 3 + len; i++)
+static void read_NOMG(u8 *buf, char *NOMG, u8 len)
+{
+    for (size_t i = 0; i < (size_t)len; i++)
     {
-        NOMG[loc] = buf[i];
-        loc++;
+        NOMG[i] = buf[i];
     }
-    NOMG[loc] = '\0';
-    
-    log_server("Le nom du groupe est : %s", NOMG);
+    NOMG[len] = '\0';
+
+    log_server("[read_NOMG] The name of the group is : %s", NOMG);
 }
 
-void read_create_group(u8 *buf, req_create_group *request)
+int read_create_group(int sock, req_create_group *request, u8 *buf_header)
 {
-    u8 len = buf[2]; // Récupération de la longueur de NOMG
-    log_server("La longueur du nom du groupe est %i ", len);
+    int user_id = read_id(buf_header);
+
+    if (is_user_exists(USER_PATH, user_id) == 0)
+    {
+        log_server("The user with id %d doesn't exists");
+        return -1;
+    }
+
+    u8 buffer[256];
+
+    ssize_t re = read(sock, buffer, 256);
+
+    if (re < 0)
+    {
+        perror("read read create group 1");
+        return -1;
+    }
+    u8 len = buffer[1]; // Récupération de la longueur de NOMG
+    log_server("[read_create_group] The length of the group name is : %i ", len);
 
     char NOMG[len + 1];
 
-    read_NOMG(buf, NOMG, len);
-    prepare_group_req(request, read_id(buf), NOMG);
+    read_NOMG(buffer, NOMG, len);
+    prepare_group_req(request, read_id(buffer), NOMG);
+
+    return 0;
 }
 
-void read_rep_create_group(u8 *buf, resp_create_group *response){
-    
+void read_rep_create_group(u8 *buf, resp_create_group *response)
+{
+
     int code_req = (buf[0] >> 3) & MASK_5_BITS;
 
-    log_client("[create group] Le code_req vaut %i", code_req);
+    log_client("[create group] the code req is : %i", code_req);
 
-    if(code_req != 4)
+    if (code_req != 4)
     {
         return;
     }

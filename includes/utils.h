@@ -9,6 +9,7 @@
 #define UTILS_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define BUF_SIZE 512
 
@@ -41,5 +42,17 @@ int read_codereq(int sock, u8 *buf_header);
  * de requête du client et de le renvoyer
  */
 int read_id(u8 * buffer);
+
+/**
+ * @brief fonction qui converti une adresse IPV6
+ * en char*. IMPORTANT : Il faut libérer la chaîne retournée !
+ * 
+ * @param addr l'adresse qui est dans un tableau
+ * de uint8_t
+ * 
+ * @return NULL si il y a eu une erreur, le string de 
+ * l'adresse sinon
+ */
+char* IPV6_addr_to_string(u8 * addr);
 
 #endif

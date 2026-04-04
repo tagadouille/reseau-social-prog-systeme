@@ -2,10 +2,10 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <unistd.h>
 
 #include "../../includes/user_storage.h"
-
 
 /**
  * Permet d'écrire les informations dans le fichier 'path'.
@@ -19,7 +19,7 @@
 int store_user(int id, const char *name, int udp_port, const char *key, const char *path)
 {
 	mkdir(path, 0755); // s'il n'existe pas déjà
-	
+
 	char user_path[MAX_LEN_PATH];
 	snprintf(user_path, MAX_LEN_PATH, "%s/%d", path, id);
 
@@ -35,7 +35,7 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 		perror("name file path too long");
 		return -1;
 	}
-	
+
 	int fd_name = open(name_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
 	if (fd_name < 0)
 	{
@@ -52,7 +52,7 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 		return -1;
 	}
 
-	printf("port : %d",udp_port);
+	printf("port : %d", udp_port);
 
 	int fd_port = open(port_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
 	if (fd_port < 0)
@@ -78,7 +78,7 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 	}
 	write(fd_key, key, strlen(key));
 	close(fd_key);
-	
+
 	return 0;
 }
 
@@ -105,4 +105,18 @@ int find_id(const char *path)
 	return -1;
 }
 
+int is_user_exists(const char *path, int id)
+{
+	char dir_path[MAX_LEN_PATH];
+	snprintf(dir_path, sizeof(dir_path), "%s/%d", path, id);
 
+	struct stat st;
+	if (stat(dir_path, &st) == -1)
+	{
+		if(errno = ENOENT)
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
