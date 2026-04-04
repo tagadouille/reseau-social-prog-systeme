@@ -89,6 +89,8 @@ int main()
     signal_hijack();
     log_server("Server configured, waiting for connections...");
 
+    srand(time(NULL)); 
+
     short ret = EXIT_FAILURE;
 
     thread_array_t *thread_array = thread_array_init(5);

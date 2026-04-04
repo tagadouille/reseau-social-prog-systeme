@@ -35,14 +35,14 @@ static int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	log_server("Creation of the group of the user will start : %s\n", request.req_code_user_id);
+	log_server("Creation of the group of the user %d will start", request.req_code_user_id);
 
 	// Stockage du groupe :
 
 	// Trouver un id de groupe libre :
 	int group_id = find_id(GROUP_PATH);
 
-	log_server("Group id found : %s, let's find a free port and address", group_id);
+	log_server("Group id found : %d, let's find a free port and address", group_id);
 
 	// Trouver un port et une adresse de libre :
 	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
@@ -57,7 +57,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 
 	free(wrapper);
 
-	log_server("Group id found : %s, let's store the group", group_id);
+	log_server("Group id found : %d, let's store the group", group_id);
 
 	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
 	if (r == -1)

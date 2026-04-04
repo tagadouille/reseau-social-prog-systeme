@@ -13,7 +13,7 @@
 typedef struct diff_wrapper {
 
     int mdiff_port;
-    u8* mdiff_addr;
+    u8 mdiff_addr[16];
 } diff_wrapper_t;
 
 /**

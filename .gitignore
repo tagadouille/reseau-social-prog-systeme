@@ -13,3 +13,5 @@ Thumbs.db
 /build/
 server.log
 client.log
+usertest/
+grouptest/

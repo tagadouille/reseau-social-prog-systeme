@@ -12,7 +12,7 @@
 #include "user_storage.h"
 #include "log.h"
 
-#define MDIFF_ADDR_SIZE sizeof(u8) * 16
+#define MDIFF_ADDR_SIZE 16
 
 int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdiff_addr[])
 {
@@ -42,7 +42,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
         perror("open name file");
         return -1;
     }
-    write(fd_name, group_name, MDIFF_ADDR_SIZE);
+        write(fd_name, group_name, strlen((const char *)group_name));
     close(fd_name);
 
     /*----------------------ECRITURE DU PORT DE MULTIDIFFUSION---------------------------------*/
@@ -101,7 +101,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
  * @return 0 si le port et l'adresse sont libres, 1 si ce n'est pas le cas, -1
  * si il y a eu une erreur
  */
-static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int is_addr_good, int is_port_good)
+static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int *is_addr_good, int *is_port_good)
 {
     DIR *dir;
     struct dirent *entry;
@@ -110,109 +110,94 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int is_addr
 
     if (dir == NULL)
     {
-
         if (errno == ENOENT)
         {
-            return 0;
+            mkdir(GROUP_PATH, 0755);
+            return 0; // Le répertoire n'existait pas, donc l'adresse et le port sont libres
         }
         perror("opendir find_free_mdiff_addr_helper");
         return -1;
     }
 
-    int ret = 0;
-
-    int is_addr_free = 1; // Si l'adresse est libre
-    int is_port_free = 1; // Si le port est libre
-
-    // Parcourt les entrées du répertoire de groupe
+    // Parcourt les sous-répertoires de groupe (ex: 0, 1, 2...)
     while ((entry = readdir(dir)) != NULL)
     {
-
-        if (is_addr_free == 0 && is_port_free == 0)
-        {
-            break;
-        }
-
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
         {
             continue;
         }
 
-        char dir_path[MAX_LEN_PATH];
-        snprintf(dir_path, sizeof(dir_path), "%s/%s", GROUP_PATH, entry->d_name);
+        char group_dir_path[MAX_LEN_PATH];
+        snprintf(group_dir_path, sizeof(group_dir_path), "%s/%s", GROUP_PATH, entry->d_name);
 
-        if (strcmp(entry->d_name, "mdiff_addr") == 0 && is_addr_free == 1 && is_addr_good == 0)
+        struct stat path_stat;
+        stat(group_dir_path, &path_stat);
+        if (!S_ISDIR(path_stat.st_mode)) {
+            continue;
+        }
+
+        // Vérifier l'adresse si on n'en a pas encore trouvé de bonne
+        if (!(*is_addr_good))
         {
-            int fd = open(dir_path, O_RDONLY, 0);
-
-            if (fd < 0)
-            {
-                perror("open mdiff file at find_free_mdiff_addr_helper");
-                log_server("[find_free_mdiff_addr_helper] Le fichier à l'emplacement %s ne semble pas existé, cependant la recherche d'une adresse libre continue", dir_path);
+            char addr_file_path[MAX_LEN_PATH];
+            int len = snprintf(addr_file_path, sizeof(addr_file_path), "%s/mdiff_addr", group_dir_path);
+            
+            if (len < 0 || (size_t)len >= sizeof(addr_file_path)) {
+                log_server("Error: file path for mdiff_addr is too long.");
                 continue;
             }
 
-            u8 addr[16];
-
-            ssize_t r = read(fd, addr, MDIFF_ADDR_SIZE);
-
-            if (r < 0)
+            int fd = open(addr_file_path, O_RDONLY);
+            if (fd >= 0)
             {
-                perror("read find_free_mdiff_addr_helper");
-            }
-
-            if (r != MDIFF_ADDR_SIZE)
-            {
-                log_server("[find_free_mdiff_addr_helper] Le contenu du fichier à l'emplacement %s ne semble pas être valide, la longueur n'est pas la bonne, cependant la recherche d'une adresse libre continue", dir_path);
-                continue;
-            }
-
-            if (memcmp(addr, diff_wrapper->mdiff_addr, MDIFF_ADDR_SIZE) == 0)
-            {
-                memset(diff_wrapper->mdiff_addr, 0, MDIFF_ADDR_SIZE);
-                log_server("[find_free_mdiff_addr_helper] L'adresse de multidiffusion est déjà utilisée par un groupe, elle est donc marquée comme non libre");
-                is_addr_free = 0;
-                ret = 1;
+                u8 addr[16];
+                if (read(fd, addr, MDIFF_ADDR_SIZE) == MDIFF_ADDR_SIZE)
+                {
+                    if (memcmp(addr, diff_wrapper->mdiff_addr, MDIFF_ADDR_SIZE) == 0)
+                    {
+                        log_server("[find_free_mdiff_addr_helper] L'adresse de multidiffusion est déjà utilisée.");
+                        closedir(dir);
+                        return 1; // Adresse déjà utilisée
+                    }
+                }
+                close(fd);
             }
         }
-        else if (strcmp(entry->d_name, "mdiff_port") == 0 && is_port_free == 1 && is_port_good == 0)
+
+        // Vérifier le port si on n'en a pas encore trouvé de bon
+        if (!(*is_port_good))
         {
-            int fd = open(dir_path, O_RDONLY, 0);
+            char port_file_path[MAX_LEN_PATH];
+            int len = snprintf(port_file_path, sizeof(port_file_path), "%s/mdiff_port", group_dir_path);
 
-            if (fd < 0)
-            {
-                perror("open mdiff file at find_free_mdiff_addr_helper");
-                log_server("[find_free_mdiff_addr_helper] Le fichier à l'emplacement %s ne semble pas existé, cependant la recherche d'une adresse libre continue", dir_path);
+            if (len < 0 || (size_t)len >= sizeof(port_file_path)) {
+                log_server("Error: file path for mdiff_port is too long.");
                 continue;
             }
 
-            int file_port;
-
-            ssize_t r = read(fd, &file_port, sizeof(file_port));
-
-            if (r < 0)
+            int fd = open(port_file_path, O_RDONLY);
+            if (fd >= 0)
             {
-                perror("read find_free_mdiff_addr_helper");
-            }
-
-            if (r != sizeof(file_port))
-            {
-                log_server("[find_free_mdiff_addr_helper] Le contenu du fichier à l'emplacement %s ne semble pas être valide, la longueur n'est pas la bonne, cependant la recherche d'une adresse libre continue", dir_path);
-                continue;
-            }
-
-            if (file_port == diff_wrapper->mdiff_port)
-            {
-                diff_wrapper->mdiff_port = 0;
-                log_server("[find_free_mdiff_addr_helper] The port is already use by a group");
-                is_port_free = 0;
-                ret = 1;
+                int file_port;
+                if (read(fd, &file_port, sizeof(file_port)) == sizeof(file_port))
+                {
+                    if (file_port == diff_wrapper->mdiff_port)
+                    {
+                        log_server("[find_free_mdiff_addr_helper] Le port est déjà utilisé.");
+                        closedir(dir);
+                        return 1; // Port déjà utilisé
+                    }
+                }
+                close(fd);
             }
         }
     }
     closedir(dir);
 
-    return ret;
+    // Si on arrive ici, c'est que l'adresse et/ou le port testé n'ont pas été trouvés
+    *is_addr_good = 1;
+    *is_port_good = 1;
+    return 0; // Libre
 }
 
 diff_wrapper_t *find_free_mdiff_addr_port()
@@ -222,67 +207,51 @@ diff_wrapper_t *find_free_mdiff_addr_port()
     if (ret == NULL)
     {
         perror("malloc diff wrapper find_free_mdiff_addr_port");
+        return NULL;
     }
 
-    int free_msg;
-    int is_addr_good = 0; // Si l'adresse est libre
-    int is_port_good = 0; // Si le port est libre
+    int is_addr_good = 0; // Si une adresse libre a été trouvée
+    int is_port_good = 0; // Si un port libre a été trouvé
 
     do
     {
-        // Générer un port et une adresse multicast aléatoire :
-        if (is_addr_good == 0)
+        // Générer une nouvelle adresse si nécessaire
+        if (!is_addr_good)
         {
-            u8 addr[16];
-            srand(time(NULL));
-
-            // Préfixe de multicast
-            addr[0] = 0xFF;
-
-            // Flags = 0x00, Scope = 0x0E (global)
-            addr[1] = 0x0E;
-
-            // Group ID aléatoire (112 bits restants)
-            for (int i = 2; i < 16; i++) // TODO faire selon l'id du groupe ??
+            // Préfixe de multicast IPv6
+            ret->mdiff_addr[0] = 0xFF; 
+            // Flags = 0x0E (transient, global scope)
+            ret->mdiff_addr[1] = 0x0E; 
+            // Group ID aléatoire (112 bits)
+            for (int i = 2; i < 16; i++)
             {
-                addr[i] = rand() % 256;
+                ret->mdiff_addr[i] = rand() % 256;
             }
-
-            ret->mdiff_addr = addr;
         }
 
-        if (is_port_good == 0)
+        // Générer un nouveau port si nécessaire
+        if (!is_port_good)
         {
             ret->mdiff_port = 5000 + rand() % 1000;
         }
 
-        free_msg = find_free_mdiff_addr_helper(ret, is_addr_good, is_port_good);
+        int find_res = find_free_mdiff_addr_helper(ret, &is_addr_good, &is_port_good);
 
-        if(free_msg < 0)
+        if (find_res < 0)
         {
             free(ret);
-            return NULL;
-        }
-
-        // Vérifier si le port est libre :
-        if(ret -> mdiff_port != 0)
-        {
-            is_port_good = 1;
-            log_server("The port %i is free !", ret -> mdiff_port);
-        }
-
-        // Vérifier si l'adresse est libre :
-        u8 addr_cmp[16];
-
-        memset(addr_cmp, 0, MDIFF_ADDR_SIZE);
-
-        if(memcmp(ret -> mdiff_addr, addr_cmp, MDIFF_ADDR_SIZE) != 0) 
-        {
-            is_addr_good = 1;
-            log_server("The address that has been found is free");
+            return NULL; // Erreur
         }
         
-    } while (free_msg != 0);
+        if (find_res == 0) {
+            // L'adresse et le port sont libres
+            log_server("Adresse et port de multidiffusion libres trouvés.");
+            break;
+        }
+
+        // Si find_res == 1, au moins un des deux est utilisé, la boucle continue
+        // en ne régénérant que ce qui est nécessaire.
+    } while (1);
 
     return ret;
 }

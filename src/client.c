@@ -191,7 +191,7 @@ void test_register(int sock)
 
 void test_create_group(int sock)
 {
-	int ID = 1;
+	int ID = 0;
 
 	u8 *send_buf = malloc(512);
 
