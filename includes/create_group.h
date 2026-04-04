@@ -35,10 +35,4 @@ void read_create_group(u8 *buf, req_create_group *request);
  */
 void read_rep_create_group(u8 *buf, resp_create_group *response);
 
-/**
- * @brief Cherche un port et une adresse IPV6 libre
- * pour la multidiffusion du groupe
- */
-multi_wrapper_t multicast_group_find();
-
 #endif

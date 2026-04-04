@@ -1,3 +1,6 @@
+#include <string.h>
+
+#include "utils.h"
 #include "create_group.h"
 
 /**
@@ -35,26 +38,22 @@ void read_create_group(u8 *buf, req_create_group *request)
 }
 
 void read_rep_create_group(u8 *buf, resp_create_group *response){
-    //TODO
-}
+    
+    int code_req = (buf[0] >> 3) & MASK_5_BITS;
 
+    client_log("[create group] Le code_req vaut %i", code_req);
 
-diff_wrapper_t * multicast_group_find() {
-
-    int mdiff_port = 0;
-    u8 mdiff_addr = 0;
-
-
-    diff_wrapper_t * ret = malloc(sizeof(diff_wrapper_t));
-
-    if(ret == NULL)
+    if(code_req != 4)
     {
-        perror("malloc diff wrapper create group");
-        return NULL;
+        return;
     }
 
-    ret -> mdiff_addr = mdiff_addr;
-    ret -> mdiff_port = mdiff_port;
+    int group_id = read_id(buf);
+
+    int mdiff_port = ntohs(buf[2]);
+
+    u8 mdiff_addr[16];
+    memcpy(mdiff_addr, buf + 3, 16);
     
-    return ret;
+    prepare_group_resp(response, group_id, mdiff_port, mdiff_addr);
 }

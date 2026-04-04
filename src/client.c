@@ -175,7 +175,7 @@ void test_register(int sock)
 		exit(1);
 	}
 
-	rea(recv_buf, response);
+	read_rep_register(recv_buf, response);
 
 	int user_id  = response->resp_code_user_id & MASK_11_BITS;
 	int udp_port = response->udp_port;
@@ -231,7 +231,7 @@ void test_create_group(int sock)
 		exit(1);
 	}
 
-	read_create_group(recv_buf, response);
+	read_rep_create_group(recv_buf, response);
 
 	int group_id  = response->resp_code_group_id & MASK_11_BITS;
 	int mdiff_port = response->mdiff_port;
