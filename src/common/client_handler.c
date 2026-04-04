@@ -12,6 +12,7 @@
 #include "../../includes/register.h"
 #include "../../includes/user_storage.h"
 #include "../../includes/create_group.h"
+#include "storage/group_storage.h"
 
 void *handle(void *arg)
 {
@@ -147,9 +148,23 @@ int handle_create_group(int sock, u8 *buf_header)
 
 	// Stockage du groupe :
 
-	int user_id = find_id(USER_PATH);
+	// Trouver un id de libre :
+	int group_id = find_id(GROUP_PATH);
 
-	int r = store_user(user_id,(char *) request.username, PORT_UDP, (char *)request.pub_key, USER_PATH);
+	// Trouver un port et une adresse de libre :
+	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
+
+	if(wrapper == NULL)
+	{
+		return -1;
+	}
+
+	int mdiff_port = wrapper->mdiff_port;
+	u8 mdiff_addr = wrapper->mdiff_addr;
+
+	free(wrapper);
+
+	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
 	if (r == -1)
 	{
 		perror("error store user");
@@ -160,7 +175,7 @@ int handle_create_group(int sock, u8 *buf_header)
 
 	resp_create_group response;
 	memset(&response, 0, sizeof(response));
-	prepare_group_resp(&response, int group_id, int mdiff_port, const u8 *mdiff_addr);
+	prepare_group_resp(&response, group_id, mdiff_port, mdiff_addr);
 
 	u8 resp_buf[SIZE_RESP_CREATE_GROUP];
 	memset(resp_buf, 0, sizeof(resp_buf));
@@ -179,6 +194,6 @@ int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	server_log("Réponse envoyée : ID=%d, UDP_PORT=%d\n", user_id, 12580);
+	server_log("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR= \n", group_id, mdiff_port); //TODO ADDR LOG
 	return 0;
 }

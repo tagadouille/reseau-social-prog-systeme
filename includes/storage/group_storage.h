@@ -19,15 +19,18 @@
  * @param group_name le nom du groupe
  * @param mdiff_port le port de multidiffusion
  * @param mdiff_addr l'adresse de multidiffusion
- * @param path le chemin de stockage
+ * 
  * @return -1 si problème d'appel système (voir perror), 0 sinon
  */
-int store_group(int id_group, const char *group_name, int mdiff_port, const u8 *mdiff_addr, const char *path);
+int store_group(int id_group, const char *group_name, int mdiff_port, const u8 *mdiff_addr);
 
 /**
  * @brief permet de trouver une adresse IPV6 ainsi
  * qu'un port de multidiffusion de libre en cherchant
  * dans les répertoires des groupes
+ * 
+ * @return le port et l'adresse trouvé dans un diff_wrapper à libérer, 
+ * NULL si erreur
  */
 diff_wrapper_t * find_free_mdiff_addr_port(); //TODO utiliser le multithreading
 

@@ -10,13 +10,15 @@
 #include "storage/group_storage.h"
 #include "user_storage.h"
 
-int store_group(int id_group, const char *group_name, int mdiff_port, const u8 *mdiff_addr, const char *path)
+#define MDIFF_ADDR_SIZE sizeof(u8) * 16
+
+int store_group(int id_group, const char *group_name, int mdiff_port, const u8 mdiff_addr[])
 {
-    mkdir(path, 0755); // s'il n'existe pas déjà
+    mkdir(GROUP_PATH, 0755); // s'il n'existe pas déjà
 
     /*----------------------CREATION DU REPERTOIRE CONTENANT LE GROUPE---------------------------------*/
     char group_path[MAX_LEN_PATH];
-    snprintf(group_path, MAX_LEN_PATH, "%s/%d", path, id_group);
+    snprintf(group_path, MAX_LEN_PATH, "%s/%d", GROUP_PATH, id_group);
 
     if (mkdir(group_path, 0755) == -1)
     {
@@ -76,7 +78,7 @@ int store_group(int id_group, const char *group_name, int mdiff_port, const u8 *
         perror("open key file");
         return -1;
     }
-    write(fd_key, mdiff_addr, sizeof(mdiff_addr));
+    write(fd_key, mdiff_addr, MDIFF_ADDR_SIZE);
     close(fd_key);
 
     return 0;
@@ -150,22 +152,22 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int is_addr
 
             u8 addr[16];
 
-            ssize_t r = read(fd, addr, 16 * sizeof(u8));
+            ssize_t r = read(fd, addr, MDIFF_ADDR_SIZE);
 
             if (r < 0)
             {
                 perror("read find_free_mdiff_addr_helper");
             }
 
-            if (r != 16 * sizeof(u8))
+            if (r != MDIFF_ADDR_SIZE)
             {
                 server_log("[find_free_mdiff_addr_helper] Le contenu du fichier à l'emplacement %s ne semble pas être valide, la longueur n'est pas la bonne, cependant la recherche d'une adresse libre continue", dir_path);
                 continue;
             }
 
-            if (memcmp(addr, diff_wrapper->mdiff_addr, 16 * sizeof(u8)) == 0)
+            if (memcmp(addr, diff_wrapper->mdiff_addr, MDIFF_ADDR_SIZE) == 0)
             {
-                memset(diff_wrapper->mdiff_addr, 0, 16 * sizeof(u8));
+                memset(diff_wrapper->mdiff_addr, 0, MDIFF_ADDR_SIZE);
                 server_log("[find_free_mdiff_addr_helper] L'adresse de multidiffusion est déjà utilisée par un groupe, elle est donc marquée comme non libre");
                 is_addr_free = 0;
                 ret = 1;
@@ -254,20 +256,28 @@ diff_wrapper_t *find_free_mdiff_addr_port()
 
         free_msg = find_free_mdiff_addr_helper(ret, is_addr_good, is_port_good);
 
+        if(free_msg < 0)
+        {
+            free(ret);
+            return NULL;
+        }
+
         // Vérifier si le port est libre :
         if(ret -> mdiff_port != 0)
         {
             is_port_good = 1;
+            server_log("Le port %i est libre !", ret -> mdiff_port);
         }
 
         // Vérifier si l'adresse est libre :
         u8 addr_cmp[16];
 
-        memset(addr_cmp, 0, 16 * sizeof(u8));
+        memset(addr_cmp, 0, MDIFF_ADDR_SIZE);
 
-        if(memcmp(ret -> mdiff_addr, addr_cmp, 16 * sizeof(u8)) != 0) 
+        if(memcmp(ret -> mdiff_addr, addr_cmp, MDIFF_ADDR_SIZE) != 0) 
         {
             is_addr_good = 1;
+            server_log("L'adresse trouvé est libre !");
         }
         
     } while (free_msg != 0);
