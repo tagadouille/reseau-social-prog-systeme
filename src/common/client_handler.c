@@ -11,6 +11,7 @@
 #include "../../includes/request.h"
 #include "../../includes/register.h"
 #include "../../includes/user_storage.h"
+#include "../../includes/create_group.h"
 
 void *handle(void *arg)
 {
@@ -122,7 +123,7 @@ int handle_register(int sock, u8 *buf_header)
  */
 int handle_create_group(int sock, u8 *buf_header)
 {
-	int remaining = SIZE_REQ_REGISTER - 2;
+	int remaining = SIZE_REQ_CREATE_GROUP - 2;
 
 	u8 rest[remaining];
 	memset(rest, 0, sizeof(rest));
@@ -133,15 +134,16 @@ int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	u8 full_buf[SIZE_REQ_REGISTER];
+	u8 full_buf[SIZE_REQ_CREATE_GROUP];
 	memcpy(full_buf, buf_header, 2);
 	memcpy(full_buf + 2, rest, remaining);
 
-	req_register request;
+	// Création de la requete de création de groupe
+	req_create_group request;
 	memset(&request, 0, sizeof(request));
-	read_register(full_buf, &request); // TODO CREATE GROUP
+	read_create_group(full_buf, &request);
 
-	printf("Création du groupe de : %s\n", request.username);
+	server_log("Création du groupe de l'utilisateur : %s\n", request.req_code_user_id);
 
 	// Stockage du groupe :
 
@@ -177,6 +179,6 @@ int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	printf("Réponse envoyée : ID=%d, UDP_PORT=%d\n", user_id, 12580);
+	server_log("Réponse envoyée : ID=%d, UDP_PORT=%d\n", user_id, 12580);
 	return 0;
 }

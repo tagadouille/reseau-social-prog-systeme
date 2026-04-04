@@ -74,3 +74,12 @@ int read_codereq(int sock, u8 *buf_header)
 
 	return (code >> 11) & MASK_5_BITS; 
 }
+
+int read_id(u8 * buffer) {
+
+    u16 value = (buffer[0] << 8) | buffer[1];
+
+    int id = value & MASK_11_BITS;
+
+    return id;
+}

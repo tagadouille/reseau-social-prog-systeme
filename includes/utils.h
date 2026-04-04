@@ -35,4 +35,11 @@ int send_all(int sock, const char *buf, int len);
 
 int read_codereq(int sock, u8 *buf_header);
 
+/**
+ * @brief permet de lire l'id du groupe ou 
+ * de l'utilisateur contenu dans le buffer
+ * de requête du client et de le renvoyer
+ */
+int read_id(u8 * buffer);
+
 #endif
