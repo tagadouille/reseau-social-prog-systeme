@@ -54,7 +54,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
         return -1;
     }
 
-    log_server("port de multidiffusion à écrire : %d", mdiff_port);
+    log_server("Broadcast port to write : %d", mdiff_port);
 
     int fd_port = open(port_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
     if (fd_port < 0)
@@ -141,7 +141,7 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int *is_add
         {
             char addr_file_path[MAX_LEN_PATH];
             int len = snprintf(addr_file_path, sizeof(addr_file_path), "%s/mdiff_addr", group_dir_path);
-            
+
             if (len < 0 || (size_t)len >= sizeof(addr_file_path)) {
                 log_server("Error: file path for mdiff_addr is too long.");
                 continue;
@@ -245,7 +245,7 @@ diff_wrapper_t *find_free_mdiff_addr_port()
         
         if (find_res == 0) {
             // L'adresse et le port sont libres
-            log_server("Adresse et port de multidiffusion libres trouvés.");
+            log_server("Free address and broadcast port found.");
             break;
         }
 

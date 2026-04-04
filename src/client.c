@@ -18,12 +18,12 @@ req_register *prepare_request(u8 name[10], u8 key[113]);
 ssize_t generate_register_request(u8 *buf, char name[10]);
 void test_register(int sock);
 void test_create_group(int sock);
-ssize_t generate_create_group_request(u8 *buf, int ID, const char* NOMG);
+ssize_t generate_create_group_request(u8 *buf, int ID, const char *NOMG);
 
 int main(int argc, char *argv[])
 {
 	// Prise en charge temporaire des arguments :
-	if(argc != 2)
+	if (argc != 2)
 	{
 		dprintf(2, "Il faut mettre un argument. Soit g pour créer un groupe, soit u pour un utilisateur\n");
 		exit(EXIT_FAILURE);
@@ -31,7 +31,8 @@ int main(int argc, char *argv[])
 	/* Initialisation de la socket client */
 	int sock;
 	sock = socket(PF_INET6, SOCK_STREAM, 0);
-	if (sock < 0) exit(1);
+	if (sock < 0)
+		exit(1);
 
 	struct sockaddr_in6 address_sock;
 	memset(&address_sock, 0, sizeof(address_sock));
@@ -45,19 +46,20 @@ int main(int argc, char *argv[])
 		close(sock);
 		exit(1);
 	}
-	
-	if(strcmp(argv[1], "u") == 0)
+
+	if (strcmp(argv[1], "u") == 0)
 	{
 		test_register(sock);
 	}
-	else if(strcmp(argv[1], "g") == 0)
+	else if (strcmp(argv[1], "g") == 0)
 	{
 		test_create_group(sock);
 	}
-	else{
+	else
+	{
 		dprintf(2, "Argument invalide, c'est soit g pour créer un groupe, soit u pour un utilisateur.\n");
 	}
-	
+
 	close(sock);
 	return 0;
 }
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
  */
 ssize_t generate_register_request(u8 *buf, char name[10])
 {
-        /* Création de la requête */
+	/* Création de la requête */
 
 	req_register *request = malloc(sizeof(req_register));
 
@@ -100,9 +102,9 @@ ssize_t generate_register_request(u8 *buf, char name[10])
  * Permet de créer la requête pour qu'un client créer un groupe, 'buf' est la chaine ou on met la requête et 'name' le nom de l'utilisateur.
  * RETURN VALUE : -1 si problème de malloc ou build_register_req sinon renvoit la taille du message.
  */
-ssize_t generate_create_group_request(u8 *buf, int ID, const char* NOMG)
+ssize_t generate_create_group_request(u8 *buf, int ID, const char *NOMG)
 {
-    /* Création de la requête */
+	/* Création de la requête */
 
 	req_create_group *request = malloc(sizeof(req_create_group));
 
@@ -139,7 +141,8 @@ void test_register(int sock)
 	snprintf(name, sizeof(name), "testuser");
 
 	u8 *send_buf = malloc(SIZE_REQ_REGISTER);
-	if (!send_buf) {
+	if (!send_buf)
+	{
 		perror("malloc send_buf");
 		exit(1);
 	}
@@ -153,7 +156,8 @@ void test_register(int sock)
 
 	/* Reception et affichage de la réponse du serveur */
 	u8 *recv_buf = malloc(SIZE_RESP_REGISTER);
-	if (!recv_buf) {
+	if (!recv_buf)
+	{
 		perror("malloc recv_buf");
 		close(sock);
 		exit(1);
@@ -170,7 +174,8 @@ void test_register(int sock)
 	}
 
 	resp_register *response = malloc(sizeof(resp_register));
-	if (!response) {
+	if (!response)
+	{
 		perror("malloc response");
 		free(recv_buf);
 		close(sock);
@@ -179,7 +184,7 @@ void test_register(int sock)
 
 	read_rep_register(recv_buf, response);
 
-	int user_id  = response->resp_code_user_id & MASK_11_BITS;
+	int user_id = response->resp_code_user_id & MASK_11_BITS;
 	int udp_port = response->udp_port;
 
 	printf("=== Réponse du serveur ===\n");
@@ -195,7 +200,8 @@ void test_create_group(int sock)
 
 	u8 *send_buf = malloc(512);
 
-	if (!send_buf) {
+	if (!send_buf)
+	{
 		perror("malloc send_buf");
 		exit(1);
 	}
@@ -209,7 +215,8 @@ void test_create_group(int sock)
 
 	/* Reception et affichage de la réponse du serveur */
 	u8 *recv_buf = malloc(SIZE_RESP_CREATE_GROUP);
-	if (!recv_buf) {
+	if (!recv_buf)
+	{
 		perror("malloc recv_buf");
 		close(sock);
 		exit(1);
@@ -226,7 +233,8 @@ void test_create_group(int sock)
 	}
 
 	resp_create_group *response = malloc(sizeof(resp_create_group));
-	if (!response) {
+	if (!response)
+	{
 		perror("malloc response");
 		free(recv_buf);
 		close(sock);
@@ -235,12 +243,20 @@ void test_create_group(int sock)
 
 	read_rep_create_group(recv_buf, response);
 
-	int group_id  = response->resp_code_group_id & MASK_11_BITS;
+	int group_id = response->resp_code_group_id & MASK_11_BITS;
 	int mdiff_port = response->mdiff_port;
+
+	u8 mdiff_addr[16];
+	memcpy(mdiff_addr, response->mdiff_ipv6, 16);
+
+	char *adr = IPV6_addr_to_string(mdiff_addr);
 
 	printf("=== Réponse du serveur ===\n");
 	printf("  ID de groupe attribuée  : %d\n", group_id);
 	printf("  Port de MULTIDIFFUSION     : %d\n", mdiff_port);
+	printf("  ADRESSE de MULTIDIFFUSION     : %s\n", adr);
+
+	free(adr);
 	free(response);
 	free(recv_buf);
 }
