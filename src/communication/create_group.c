@@ -39,12 +39,22 @@ void read_rep_create_group(u8 *buf, resp_create_group *response){
 }
 
 
-multi_wrapper_t multicast_group_find() {
+diff_wrapper_t * multicast_group_find() {
 
     int mdiff_port = 0;
     u8 mdiff_addr = 0;
 
-    multi_wrapper_t ret = {mdiff_port : mdiff_port, mdiff_addr : mdiff_addr};
 
+    diff_wrapper_t * ret = malloc(sizeof(diff_wrapper_t));
+
+    if(ret == NULL)
+    {
+        perror("malloc diff wrapper create group");
+        return NULL;
+    }
+
+    ret -> mdiff_addr = mdiff_addr;
+    ret -> mdiff_port = mdiff_port;
+    
     return ret;
 }
