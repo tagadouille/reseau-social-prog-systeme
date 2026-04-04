@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
@@ -13,6 +14,89 @@
 #include "../../includes/user_storage.h"
 #include "../../includes/create_group.h"
 #include "storage/group_storage.h"
+#include "../../includes/log.h"
+
+/**
+ * @brief Fonction pour gérer le cas d'une requête de création de groupe, en deux étapes
+ * on lit et on reconstruit la requête dans 'buf_header' sur le serveur,
+ * On la traite et on produit une réponse en suivant le protocole pour l'envoyer au client 'sock'
+ * @return -1 si problème de lecture ou construction de la requête et réponse sinon 0.
+ */
+static int handle_create_group(int sock, u8 *buf_header)
+{
+	int remaining = SIZE_REQ_CREATE_GROUP - 2;
+
+	u8 rest[remaining];
+	memset(rest, 0, sizeof(rest));
+
+	if (recv_all(sock, (char *)rest, remaining) < 0)
+	{
+	    perror("erreur lecture corps création groupe");
+		return -1;
+	}
+
+	u8 full_buf[SIZE_REQ_CREATE_GROUP];
+	memcpy(full_buf, buf_header, 2);
+	memcpy(full_buf + 2, rest, remaining);
+
+	// Création de la requete de création de groupe
+	req_create_group request;
+	memset(&request, 0, sizeof(request));
+	read_create_group(full_buf, &request);
+
+	log_server("Création du groupe de l'utilisateur : %s\n", request.req_code_user_id);
+
+	// Stockage du groupe :
+
+	// Trouver un id de libre :
+	int group_id = find_id(GROUP_PATH);
+
+	// Trouver un port et une adresse de libre :
+	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
+
+	if(wrapper == NULL)
+	{
+		return -1;
+	}
+
+	int mdiff_port = wrapper->mdiff_port;
+	u8 *mdiff_addr = wrapper->mdiff_addr;
+
+	free(wrapper);
+
+	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
+	if (r == -1)
+	{
+		perror("error store user");
+		return -1;
+	}
+
+	// Préparation de la réponse :
+
+	resp_create_group response;
+	memset(&response, 0, sizeof(response));
+	prepare_group_resp(&response, group_id, mdiff_port, mdiff_addr);
+
+	u8 resp_buf[SIZE_RESP_CREATE_GROUP];
+	memset(resp_buf, 0, sizeof(resp_buf));
+
+	ssize_t len = build_group_resp(resp_buf, &response);
+
+	if (len < 0)
+	{
+		perror("erreur construction réponse création groupe");
+		return -1;
+	}
+
+	if (send_all(sock, (char *)resp_buf, len) < 0)
+	{
+		perror("erreur envoi réponse création groupe");
+		return -1;
+	}
+
+	log_server("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR= \n", group_id, mdiff_port); //TODO ADDR LOG
+	return 0;
+}
 
 void *handle(void *arg)
 {
@@ -113,87 +197,5 @@ int handle_register(int sock, u8 *buf_header)
 	}
 
 	printf("Réponse envoyée : ID=%d, UDP_PORT=%d\n", user_id, 12580);
-	return 0;
-}
-
-/**
- * @brief Fonction pour gérer le cas d'une requête de création de groupe, en deux étapes
- * on lit et on reconstruit la requête dans 'buf_header' sur le serveur,
- * On la traite et on produit une réponse en suivant le protocole pour l'envoyer au client 'sock'
- * RETURN VALUE: -1 si problème de lecture ou construction de la requête et réponse sinon 0.
- */
-int handle_create_group(int sock, u8 *buf_header)
-{
-	int remaining = SIZE_REQ_CREATE_GROUP - 2;
-
-	u8 rest[remaining];
-	memset(rest, 0, sizeof(rest));
-
-	if (recv_all(sock, (char *)rest, remaining) < 0)
-	{
-	    perror("erreur lecture corps création groupe");
-		return -1;
-	}
-
-	u8 full_buf[SIZE_REQ_CREATE_GROUP];
-	memcpy(full_buf, buf_header, 2);
-	memcpy(full_buf + 2, rest, remaining);
-
-	// Création de la requete de création de groupe
-	req_create_group request;
-	memset(&request, 0, sizeof(request));
-	read_create_group(full_buf, &request);
-
-	server_log("Création du groupe de l'utilisateur : %s\n", request.req_code_user_id);
-
-	// Stockage du groupe :
-
-	// Trouver un id de libre :
-	int group_id = find_id(GROUP_PATH);
-
-	// Trouver un port et une adresse de libre :
-	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
-
-	if(wrapper == NULL)
-	{
-		return -1;
-	}
-
-	int mdiff_port = wrapper->mdiff_port;
-	u8 mdiff_addr = wrapper->mdiff_addr;
-
-	free(wrapper);
-
-	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
-	if (r == -1)
-	{
-		perror("error store user");
-		return -1;
-	}
-
-	// Préparation de la réponse :
-
-	resp_create_group response;
-	memset(&response, 0, sizeof(response));
-	prepare_group_resp(&response, group_id, mdiff_port, mdiff_addr);
-
-	u8 resp_buf[SIZE_RESP_CREATE_GROUP];
-	memset(resp_buf, 0, sizeof(resp_buf));
-
-	ssize_t len = build_group_resp(resp_buf, &response);
-
-	if (len < 0)
-	{
-		perror("erreur construction réponse création groupe");
-		return -1;
-	}
-
-	if (send_all(sock, (char *)resp_buf, len) < 0)
-	{
-		perror("erreur envoi réponse création groupe");
-		return -1;
-	}
-
-	server_log("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR= \n", group_id, mdiff_port); //TODO ADDR LOG
 	return 0;
 }

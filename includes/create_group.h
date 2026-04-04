@@ -7,17 +7,6 @@
 #include "serialization.h"
 
 /**
- * @brief Wrapper contenant les informations
- * relative à une adresse de multidiffusion
- * et son port associé
- */
-typedef struct diff_wrapper {
-
-    int mdiff_port;
-    u8 mdiff_addr;
-} diff_wrapper_t;
-
-/**
  * @brief permet de lire dans le buffer de requête et
  * de remplir la structure de requête de création de groupe
  * 

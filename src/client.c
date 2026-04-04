@@ -17,6 +17,7 @@
 req_register *prepare_request(u8 name[10], u8 key[113]);
 ssize_t generate_register_request(u8 *buf, char name[10]);
 void test_register(int sock);
+void test_create_group(int sock);
 ssize_t generate_create_group_request(u8 *buf, int ID, const char* NOMG);
 
 int main(int argc, char *argv[])
