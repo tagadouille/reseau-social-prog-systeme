@@ -98,9 +98,9 @@ int add_user_group(int user_id, int group_id)
 
     // Construction du chemin vers le groupe
 
-    snprintf(dir_name, "%s/%d", GROUP_PATH, group_id);
+    snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id);
 
-    DIR *dir = opendir(GROUP_PATH);
+    DIR *dir = opendir(dir_name);
 
     if (dir == NULL)
     {
@@ -115,7 +115,7 @@ int add_user_group(int user_id, int group_id)
 
     // Chemin vers le répertoire users
 
-    snprintf(dir_name, "%s/users", dir_name);
+    snprintf(dir_name, PATH_MAX, "%s/%d/users", GROUP_PATH, group_id);
 
     if (mkdir(dir_name, 0755) < 0) // s'il n'existe pas déjà
     {
@@ -128,7 +128,7 @@ int add_user_group(int user_id, int group_id)
 
     // Création du fichier de l'utilisateur
 
-    snprintf(dir_name, "%s/%d", dir_name, user_id);
+    snprintf(dir_name, PATH_MAX, "%s/%d/users/%d", GROUP_PATH, group_id, user_id);
 
     int fd = open(dir_name, O_CREAT, 644);
 
@@ -153,7 +153,7 @@ int delete_group(int group_id)
 {
     char dir_path[PATH_MAX];
 
-    snprintf(dir_path, "%s/%d", GROUP_PATH, group_id);
+    snprintf(dir_path, PATH_MAX, "%s/%d", GROUP_PATH, group_id);
 
     int r = delete_directory(dir_path);
 
@@ -167,9 +167,9 @@ int delete_group(int group_id)
 
 int delete_user_group(int user_id, int group_id)
 {
-    char dir_name[512];
+    char dir_name[PATH_MAX];
 
-    snprintf(dir_name, "%s/%d/users/%d", GROUP_PATH, group_id, user_id);
+    snprintf(dir_name, PATH_MAX, "%s/%d/users/%d", GROUP_PATH, group_id, user_id);
 
     if (unlink(dir_name) < 0)
     {

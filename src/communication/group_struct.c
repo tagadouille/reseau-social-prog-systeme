@@ -1,3 +1,6 @@
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "communication/group_struct.h"
 
 group_t * group_initialize(int group_id, const u8 *group_name, int id_admin)
@@ -16,7 +19,10 @@ group_t * group_fill(int group_id, const u8 *group_name, int id_admin, int *memb
     }
 
     group->group_id = group_id;
-    group->group_name = group_name;
+
+    group -> group_name = malloc(strlen((char*) group_name) + 1);
+    memcpy(group->group_name, group_name, strlen((char*) group_name) + 1);
+
     group->id_admin = id_admin;
     group->members_id = members_id;
     group->mdiff_port = mdiff_port;
@@ -28,10 +34,11 @@ group_t * group_fill(int group_id, const u8 *group_name, int id_admin, int *memb
 group_t * group_fill_from_files(int group_id)
 {
     // TODO
+    printf("%d", group_id);
     return NULL;
 }
 
-void group_free(group_t *group)
+void group_struct_destroy(group_t* group)
 {
     if (group != NULL)
     {

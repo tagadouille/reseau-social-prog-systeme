@@ -13,6 +13,7 @@
 #include "../../includes/register.h"
 #include "../../includes/user_storage.h"
 #include "communication/create_group.h"
+#include "communication/group_struct.h"
 #include "storage/group_storage.h"
 #include "log.h"
 
