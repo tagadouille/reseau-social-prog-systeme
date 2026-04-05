@@ -105,9 +105,10 @@ char *IPV6_addr_to_string(uint8_t *addr) {
 }
 
 /**
- * @brief Delete reccursively all the files and directories
+ * @brief Supprime récursivement tous les fichiers et répertoires
+ * d'un chemin donné, puis supprime le répertoire lui-même.
  * 
- * @param path path to the directory to delete
+ * @param path le chemin vers le répertoire à supprimer
  * @return 0 if success, -1 if error
  */
 static int remove_directory_contents(const char *path) {
@@ -177,7 +178,7 @@ static int remove_directory_contents(const char *path) {
     }
     
     if (closedir(dir) == -1) {
-        dprintf(2, "Error : Erreur when closing the directory '%s': %s\n", path, strerror(errno));
+        dprintf(2, "Error : Error when closing the directory '%s': %s\n", path, strerror(errno));
     }
     
     if (result == 0) {
@@ -197,8 +198,6 @@ int delete_directory(const char *path) {
         dprintf(2, "Error : the path can't be null\n");
         return -1;
     }
-    
-    dprintf(1, "=== Start : Deletion of '%s' ===\n", path);
     
     // Some verifications :
     if (access(path, F_OK) == -1) {
@@ -223,8 +222,6 @@ int delete_directory(const char *path) {
         dprintf(2, "Error: failed to delete the directory '%s': %s\n", path, strerror(errno));
         result = -1;
     }
-
-    dprintf(1, "=== End: Deletion of '%s' - %s ===\n", path, result == 0 ? "Success" : "Failure");
     
     return result;
 }
