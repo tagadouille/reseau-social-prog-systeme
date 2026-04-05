@@ -19,8 +19,11 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
 {
     if (mkdir(GROUP_PATH, 0755) < 0) // s'il n'existe pas déjà
     {
-        perror("mkdir");
-        return -1;
+        if(errno != EEXIST)
+        {
+            perror("mkdir store_group");
+            return -1;
+        }
     }
 
     /*----------------------CREATION DU REPERTOIRE CONTENANT LE GROUPE---------------------------------*/
@@ -29,7 +32,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
 
     if (mkdir(group_path, 0755) == -1)
     {
-        perror("mkdir user dir");
+        perror("mkdir group dir store_group");
         return -1;
     }
 
@@ -37,14 +40,14 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     char name_file_path[PATH_MAX];
     if (snprintf(name_file_path, PATH_MAX, "%s/group_name", group_path) >= PATH_MAX)
     {
-        perror("name file path too long");
+        perror("name file path too long store_group");
         return -1;
     }
 
     int fd_name = open(name_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
     if (fd_name < 0)
     {
-        perror("open name file");
+        perror("open name file store_group");
         return -1;
     }
     write(fd_name, group_name, strlen((const char *)group_name));
@@ -55,7 +58,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     char port_file_path[PATH_MAX];
     if (snprintf(port_file_path, PATH_MAX, "%s/mdiff_port", group_path) >= PATH_MAX)
     {
-        perror("port file path too long");
+        perror("port file path too long store_group");
         return -1;
     }
 
@@ -64,7 +67,7 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     int fd_port = open(port_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
     if (fd_port < 0)
     {
-        perror("open port udp file");
+        perror("open port udp file store_group");
         return -1;
     }
     write(fd_port, &mdiff_port, sizeof(int));
@@ -75,14 +78,14 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     char key_file_path[PATH_MAX];
     if (snprintf(key_file_path, PATH_MAX, "%s/mdiff_addr", group_path) >= PATH_MAX)
     {
-        perror("key file path too long");
+        perror("key file path too long store_group");
         return -1;
     }
 
     int fd_key = open(key_file_path, O_CREAT | O_EXCL | O_WRONLY, 0755);
     if (fd_key < 0)
     {
-        perror("open key file");
+        perror("open key file store_group");
         return -1;
     }
     write(fd_key, mdiff_addr, MDIFF_ADDR_SIZE);
@@ -108,7 +111,7 @@ int add_user_group(int user_id, int group_id)
         {
             log_server("The group of id %d doesn't exists", group_id);
         }
-        perror("opendir find_free_mdiff_addr_helper");
+        perror("opendir add_user_group");
         return -1;
     }
     closedir(dir);
@@ -121,7 +124,7 @@ int add_user_group(int user_id, int group_id)
     {
         if (errno != EEXIST)
         {
-            perror("mkdir");
+            perror("mkdir add_user_group");
             return -1;
         }
     }
@@ -136,7 +139,7 @@ int add_user_group(int user_id, int group_id)
     {
         if (errno == EEXIST)
         {
-            log_server("L'utilisateur existe déjà");
+            log_server("[add_user_group] The user %d is already in the group %d", user_id, group_id);
             return 0;
         }
         perror("open add user group");
@@ -144,7 +147,7 @@ int add_user_group(int user_id, int group_id)
     }
     close(fd);
 
-    log_server("The user %d was added to the group %d with success", user_id, group_id);
+    log_server("[add_user_group] The user %d was added to the group %d with success", user_id, group_id);
 
     return 0;
 }
@@ -388,7 +391,7 @@ diff_wrapper_t *find_free_mdiff_addr_port()
         if (find_res == 0)
         {
             // L'adresse et le port sont libres
-            log_server("Free address and broadcast port found.");
+            log_server("[find_free_mdiff_addr_port] Free address and broadcast port found.");
             break;
         }
 
