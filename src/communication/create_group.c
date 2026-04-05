@@ -26,7 +26,7 @@ static void read_NOMG(u8 *buf, char *NOMG, u8 len)
     log_server("[read_NOMG] The name of the group is : %s", NOMG);
 }
 
-group_t* read_create_group(int sock, req_create_group *request, u8 *buf_header)
+group_t *read_create_group(int sock, req_create_group *request, u8 *buf_header)
 {
     int user_id = read_id(buf_header);
 
@@ -53,7 +53,7 @@ group_t* read_create_group(int sock, req_create_group *request, u8 *buf_header)
     read_NOMG(buffer, NOMG, len);
     prepare_group_req(request, user_id, NOMG);
 
-    return group_initialize(-1, (const u8 *) NOMG, user_id);
+    return group_initialize(-1, (const u8 *)NOMG, user_id);
 }
 
 void read_rep_create_group(u8 *buf, resp_create_group *response)

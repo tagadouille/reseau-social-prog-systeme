@@ -6,6 +6,19 @@
 #define GROUP_PATH "./grouptest"
 
 /**
+ * STRUCTURE DE L'ARBORESCENCE DES GROUPES :
+ * 
+ * ├── 0
+ *     ├── mdiff_addr
+ *     ├── group_name
+ *     ├── mdiff_port
+ *     ├── admin_id
+ *     ├__ users/
+ *
+ */
+
+ 
+/**
  * @brief Wrapper contenant les informations
  * relative à une adresse de multidiffusion
  * et son port associé
@@ -18,13 +31,7 @@ typedef struct diff_wrapper {
 
 /**
  * @brief Permet d'écrire les informations relatif au groupe pour son enregistrement 
- * dans le fichier 'path' :
- * ├── 0
- *     ├── mdiff_addr
- *     ├── group_name
- *     └── mdiff_port
- *     |__ users/
- *
+ * dans le fichier 'path'
  * @param id_group l'identifiant du groupe
  * @param group_name le nom du groupe
  * @param mdiff_port le port de multidiffusion
@@ -52,6 +59,14 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 *md
  * @return 0 si succès, -1 si erreur
  */
 int add_user_group(int user_id, int group_id);
+
+/**
+ * @brief Ajoute l'admin du groupe dans le répertoire du groupe
+ * 
+ * @param admin_id l'id de l'admin
+ * @param group_id l'id du groupe en question
+ */
+int add_admin_group(int admin_id, int group_id);
 
 /**
  * @brief permet de supprimer un group

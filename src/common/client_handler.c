@@ -32,14 +32,14 @@ static int handle_create_group(int sock, u8 *buf_header)
 	memset(&request, 0, sizeof(request));
 
 	// Structure group utiliser pour les logs et avoir l'admin
-	group_t * group = read_create_group(sock, &request, buf_header);
-	
-	if(group == NULL)
+	group_t *group = read_create_group(sock, &request, buf_header);
+
+	if (group == NULL)
 	{
 		return -1;
 	}
 
-	log_server("Creation of the group of the user %d will start", group -> id_admin);
+	log_server("Creation of the group of the user %d will start", group->id_admin);
 
 	// Stockage du groupe :
 
@@ -49,9 +49,9 @@ static int handle_create_group(int sock, u8 *buf_header)
 	log_server("Group id found : %d, let's find a free port and address", group_id);
 
 	// Trouver un port et une adresse de libre :
-	diff_wrapper_t * wrapper = find_free_mdiff_addr_port();
+	diff_wrapper_t *wrapper = find_free_mdiff_addr_port();
 
-	if(wrapper == NULL)
+	if (wrapper == NULL)
 	{
 		group_struct_destroy(group);
 		return -1;
@@ -72,9 +72,9 @@ static int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	r = add_user_group(group->id_admin, group_id);
+	r = add_admin_group(group->id_admin, group_id);
 
-	if(r < 0)
+	if (r < 0)
 	{
 		delete_group(group_id);
 		log_server("Adding the user failed, deleting the group..");
@@ -110,7 +110,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
-	char* addr = IPV6_addr_to_string(mdiff_addr);
+	char *addr = IPV6_addr_to_string(mdiff_addr);
 	log_server("Réponse envoyée : GROUP_ID=%d, PORT=%d ADDR=%s\n", group_id, mdiff_port, addr);
 	free(addr);
 	return 0;
@@ -135,14 +135,14 @@ void *handle(void *arg)
 	int ret;
 	switch (codereq)
 	{
-        case REQ_REGISTER:
-			ret = handle_register(sock, buf);
-			break;
-		case REQ_CREATE_GROUP:
-			ret = handle_create_group(sock, buf);
-			break;
+	case REQ_REGISTER:
+		ret = handle_register(sock, buf);
+		break;
+	case REQ_CREATE_GROUP:
+		ret = handle_create_group(sock, buf);
+		break;
 
-        default:
+	default:
 		perror("CODEREQ inconnu");
 		ret = -1;
 		break;
@@ -154,7 +154,6 @@ void *handle(void *arg)
 cleanup:
 	close(sock);
 	return NULL;
-
 }
 
 /**
@@ -171,7 +170,7 @@ int handle_register(int sock, u8 *buf_header)
 
 	if (recv_all(sock, (char *)rest, remaining) < 0)
 	{
-	        perror("erreur lecture corps register");
+		perror("erreur lecture corps register");
 		return -1;
 	}
 
@@ -187,7 +186,7 @@ int handle_register(int sock, u8 *buf_header)
 
 	int user_id = find_id(USER_PATH);
 
-	int r = store_user(user_id,(char *) request.username, PORT_UDP, (char *)request.pub_key, USER_PATH);
+	int r = store_user(user_id, (char *)request.username, PORT_UDP, (char *)request.pub_key, USER_PATH);
 	if (r == -1)
 	{
 		perror("error store user");

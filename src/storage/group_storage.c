@@ -144,7 +144,50 @@ int add_user_group(int user_id, int group_id)
     }
     close(fd);
 
-    log_server("The user %d was added to the group %d with success");
+    log_server("The user %d was added to the group %d with success", user_id, group_id);
+
+    return 0;
+}
+
+int add_admin_group(int admin_id, int group_id)
+{
+    char dir_name[PATH_MAX];
+
+    // Construction du chemin vers le groupe
+
+    snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id);
+
+    DIR *dir = opendir(dir_name);
+
+    if (dir == NULL)
+    {
+        if (errno == ENOENT)
+        {
+            log_server("The group of id %d doesn't exists", group_id);
+        }
+        perror("opendir find_free_mdiff_addr_helper");
+        return -1;
+    }
+    closedir(dir);
+
+    snprintf(dir_name, PATH_MAX, "%s/%s", GROUP_PATH, "admin_id");
+
+    int fd = open(dir_name, O_CREAT | O_WRONLY, 0755);
+
+    if (fd < 0)
+    {
+        perror("open add admin group");
+        return -1;
+    }
+    if (write(fd, &admin_id, sizeof(admin_id)) != sizeof(admin_id))
+    {
+        perror("write add admin");
+        close(fd);
+        return -1;
+    }
+
+    log_server("The admin %d was added to the group %d with success", admin_id, group_id);
+    close(fd);
 
     return 0;
 }
