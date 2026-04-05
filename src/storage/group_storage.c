@@ -101,7 +101,11 @@ int add_user_group(int user_id, int group_id)
 
     // Construction du chemin vers le groupe
 
-    snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id);
+    if(snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id) >= PATH_MAX)
+    {
+        perror("group path too long add_user_group");
+        return -1;
+    }
 
     DIR *dir = opendir(dir_name);
 
@@ -118,9 +122,14 @@ int add_user_group(int user_id, int group_id)
 
     // Chemin vers le répertoire users
 
-    snprintf(dir_name, PATH_MAX, "%s/%d/users", GROUP_PATH, group_id);
+    char users_path[PATH_MAX];
+    if(snprintf(users_path, PATH_MAX, "%s/users", dir_name) >= PATH_MAX)
+    {
+        perror("users path too long add_user_group");
+        return -1;
+    }
 
-    if (mkdir(dir_name, 0755) < 0) // s'il n'existe pas déjà
+    if (mkdir(users_path, 0755) < 0) // s'il n'existe pas déjà
     {
         if (errno != EEXIST)
         {
@@ -131,7 +140,11 @@ int add_user_group(int user_id, int group_id)
 
     // Création du fichier de l'utilisateur
 
-    snprintf(dir_name, PATH_MAX, "%s/%d/users/%d", GROUP_PATH, group_id, user_id);
+    if(snprintf(dir_name, PATH_MAX, "%s/%d", users_path, user_id) >= PATH_MAX)
+    {
+        perror("user file path too long add_user_group");
+        return -1;
+    }
 
     int fd = open(dir_name, O_CREAT, 644);
 
@@ -158,7 +171,11 @@ int add_admin_group(int admin_id, int group_id)
 
     // Construction du chemin vers le groupe
 
-    snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id);
+    if(snprintf(dir_name, PATH_MAX, "%s/%d", GROUP_PATH, group_id) >= PATH_MAX)
+    {
+        perror("group path too long add_admin_group");
+        return -1;
+    }
 
     DIR *dir = opendir(dir_name);
 
@@ -173,16 +190,21 @@ int add_admin_group(int admin_id, int group_id)
     }
     closedir(dir);
 
-    snprintf(dir_name, PATH_MAX, "%s/%s", GROUP_PATH, "admin_id");
+    char admin_file_path[PATH_MAX];
+    if(snprintf(admin_file_path, PATH_MAX, "%s/admin_id", dir_name) >= PATH_MAX)
+    {
+        perror("admin file path too long add_admin_group");
+        return -1;
+    }
 
-    int fd = open(dir_name, O_CREAT | O_WRONLY, 0755);
+    int fd = open(admin_file_path, O_CREAT | O_WRONLY, 0755);
 
     if (fd < 0)
     {
         perror("open add admin group");
         return -1;
     }
-    if (write(fd, &admin_id, sizeof(admin_id)) != sizeof(admin_id))
+    if (write(fd, admin_id, sizeof(admin_id)) != sizeof(admin_id))
     {
         perror("write add admin");
         close(fd);
