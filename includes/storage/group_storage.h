@@ -23,6 +23,7 @@ typedef struct diff_wrapper {
  *     ├── mdiff_addr
  *     ├── group_name
  *     └── mdiff_port
+ *     |__ users/
  *
  * @param id_group l'identifiant du groupe
  * @param group_name le nom du groupe
@@ -32,6 +33,47 @@ typedef struct diff_wrapper {
  * @return -1 si problème d'appel système (voir perror), 0 sinon
  */
 int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 *mdiff_addr);
+
+/**
+ * @brief Permet d'ajouter un utilisateur à un groupe
+ * en fonction de son id en l'enregistrant dans le
+ * répertoire des groupes.
+ * 
+ * Le répertoire des utilisateurs à l'intérieur d'un groupe est de cette forme:
+ *     |__users/
+ *             |__ 0
+ *             |__ 1
+ *             |__ 2
+ *             ...
+ * 
+ * @param user_id l'id de l'utilisateur
+ * @param group_id l'id du groupe
+ * 
+ * @return 0 si succès, -1 si erreur
+ */
+int add_user_group(int user_id, int group_id);
+
+/**
+ * @brief permet de supprimer un group
+ * selon son id
+ * 
+ * @param group_id l'id du groupe à supprimer
+ * 
+ * @return 0 si succès, -1 si erreur
+ */
+int delete_group(int group_id);
+
+/**
+ * @brief Permet de supprimer un utilisateur d'un groupe
+ * en fonction de son id en l'enregistrant dans le
+ * répertoire des groupes
+ * 
+ * @param user_id l'id de l'utilisateur
+ * @param group_id l'id du groupe
+ * 
+ * @return 0 si succès, -1 si erreur
+ */
+int delete_user_group(int user_id, int group_id);
 
 /**
  * @brief permet de trouver une adresse IPV6 ainsi

@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <linux/limits.h>
 
 #include "storage/group_storage.h"
 #include "user_storage.h"
@@ -16,11 +17,15 @@
 
 int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdiff_addr[])
 {
-    mkdir(GROUP_PATH, 0755); // s'il n'existe pas déjà
+    if(mkdir(GROUP_PATH, 0755) < 0) // s'il n'existe pas déjà
+    {
+        perror("mkdir");
+        return -1;
+    }
 
     /*----------------------CREATION DU REPERTOIRE CONTENANT LE GROUPE---------------------------------*/
-    char group_path[MAX_LEN_PATH];
-    snprintf(group_path, MAX_LEN_PATH, "%s/%d", GROUP_PATH, id_group);
+    char group_path[PATH_MAX];
+    snprintf(group_path, PATH_MAX, "%s/%d", GROUP_PATH, id_group);
 
     if (mkdir(group_path, 0755) == -1)
     {
@@ -29,8 +34,8 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     }
 
     /*----------------------ECRITURE DU NOM DU GROUPE---------------------------------*/
-    char name_file_path[MAX_LEN_PATH];
-    if (snprintf(name_file_path, MAX_LEN_PATH, "%s/group_name", group_path) >= MAX_LEN_PATH)
+    char name_file_path[PATH_MAX];
+    if (snprintf(name_file_path, PATH_MAX, "%s/group_name", group_path) >= PATH_MAX)
     {
         perror("name file path too long");
         return -1;
@@ -47,8 +52,8 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
 
     /*----------------------ECRITURE DU PORT DE MULTIDIFFUSION---------------------------------*/
 
-    char port_file_path[MAX_LEN_PATH];
-    if (snprintf(port_file_path, MAX_LEN_PATH, "%s/mdiff_port", group_path) >= MAX_LEN_PATH)
+    char port_file_path[PATH_MAX];
+    if (snprintf(port_file_path, PATH_MAX, "%s/mdiff_port", group_path) >= PATH_MAX)
     {
         perror("port file path too long");
         return -1;
@@ -67,8 +72,8 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
 
     /*----------------------ECRITURE DE L'ADRESSE DE MULTIDIFFUSION---------------------------------*/
 
-    char key_file_path[MAX_LEN_PATH];
-    if (snprintf(key_file_path, MAX_LEN_PATH, "%s/mdiff_addr", group_path) >= MAX_LEN_PATH)
+    char key_file_path[PATH_MAX];
+    if (snprintf(key_file_path, PATH_MAX, "%s/mdiff_addr", group_path) >= PATH_MAX)
     {
         perror("key file path too long");
         return -1;
@@ -82,6 +87,85 @@ int store_group(int id_group, const u8 *group_name, int mdiff_port, const u8 mdi
     }
     write(fd_key, mdiff_addr, MDIFF_ADDR_SIZE);
     close(fd_key);
+
+    return 0;
+}
+
+int add_user_group(int user_id, int group_id)
+{
+
+    char dir_name[512];
+
+    snprintf(dir_name, "%s/%d", GROUP_PATH, group_id);
+
+    DIR * dir = opendir(GROUP_PATH);
+
+    if (dir == NULL)
+    {
+        if (errno == ENOENT)
+        {
+            log_server("The group of id %d doesn't exists", group_id);
+        }
+        perror("opendir find_free_mdiff_addr_helper");
+        return -1;
+    }
+    closedir(dir);
+
+    snprintf(dir_name, "%s/users", dir_name);
+
+    if(mkdir(dir_name, 0755) < 0) // s'il n'existe pas déjà
+    {
+        perror("mkdir");
+        return -1;
+    }
+       
+    snprintf(dir_name, "%s/%d", dir_name, user_id);
+
+    int fd = open(dir_name, O_CREAT, 644);
+    
+    if(fd < 0)
+    {
+        if(errno == EEXIST)
+        {
+            log_server("L'utilisateur existe déjà");
+            return 0;
+        }
+        perror("open add user group");
+        return -1;
+    }
+    close(fd);
+
+    log_server("The user %d was added to the group %d with success");
+
+    return 0;
+}
+
+/**
+ * @brief permet de supprimer un group
+ * selon son id
+ * 
+ * @param group_id l'id du groupe à supprimer
+ * 
+ * @return 0 si succès, -1 si erreur
+ */
+int delete_group(int group_id)
+{
+    // TODO
+}
+
+int delete_user_group(int user_id, int group_id)
+{
+    char dir_name[512];
+
+    snprintf(dir_name, "%s/%d/users/%d", GROUP_PATH, group_id, user_id);
+
+    if(unlink(dir_name) < 0)
+    {
+        perror("unlink");
+        return -1;
+    }
+
+    log_server("The user %d was deleted of the group %d with success");
 
     return 0;
 }
@@ -127,7 +211,7 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int *is_add
             continue;
         }
 
-        char group_dir_path[MAX_LEN_PATH];
+        char group_dir_path[PATH_MAX];
         snprintf(group_dir_path, sizeof(group_dir_path), "%s/%s", GROUP_PATH, entry->d_name);
 
         struct stat path_stat;
@@ -139,7 +223,7 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int *is_add
         // Vérifier l'adresse si on n'en a pas encore trouvé de bonne
         if (!(*is_addr_good))
         {
-            char addr_file_path[MAX_LEN_PATH];
+            char addr_file_path[PATH_MAX];
             int len = snprintf(addr_file_path, sizeof(addr_file_path), "%s/mdiff_addr", group_dir_path);
 
             if (len < 0 || (size_t)len >= sizeof(addr_file_path)) {
@@ -167,7 +251,7 @@ static int find_free_mdiff_addr_helper(diff_wrapper_t *diff_wrapper, int *is_add
         // Vérifier le port si on n'en a pas encore trouvé de bon
         if (!(*is_port_good))
         {
-            char port_file_path[MAX_LEN_PATH];
+            char port_file_path[PATH_MAX];
             int len = snprintf(port_file_path, sizeof(port_file_path), "%s/mdiff_port", group_dir_path);
 
             if (len < 0 || (size_t)len >= sizeof(port_file_path)) {

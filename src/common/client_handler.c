@@ -66,6 +66,15 @@ static int handle_create_group(int sock, u8 *buf_header)
 		return -1;
 	}
 
+	r = add_user_group(, group_id);
+
+	if(r < 0)
+	{
+		delete_group(group_id);
+		log_server("Adding the user failed, deleting the group..");
+		return -1;
+	}
+
 	log_server("Storing finish, create response");
 
 	// Préparation de la réponse :

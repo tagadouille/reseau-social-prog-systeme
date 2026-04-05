@@ -2,7 +2,6 @@
 #define USER_STORAGE_H
 
 #define USER_PATH "./usertest"
-#define MAX_LEN_PATH 1024
 
 int store_user(int id, const char *name, int udp_port, const char *key, const char *path);
 

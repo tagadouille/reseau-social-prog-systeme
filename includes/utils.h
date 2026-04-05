@@ -55,4 +55,13 @@ int read_id(u8 * buffer);
  */
 char* IPV6_addr_to_string(u8 * addr);
 
+/**
+ * @brief supprime le contenu d'un répertoire dans le chemin spécifé
+ * 
+ * @param path le chemin vers le répertoire à supprimer
+ * 
+ * @return 0 si succès, -1 si erreur
+ */
+int delete_directory(const char *path);
+
 #endif

@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 #include "../../includes/user_storage.h"
 
@@ -20,8 +21,8 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 {
 	mkdir(path, 0755); // s'il n'existe pas déjà
 
-	char user_path[MAX_LEN_PATH];
-	snprintf(user_path, MAX_LEN_PATH, "%s/%d", path, id);
+	char user_path[PATH_MAX];
+	snprintf(user_path, PATH_MAX, "%s/%d", path, id);
 
 	if (mkdir(user_path, 0755) == -1)
 	{
@@ -29,8 +30,8 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 		return -1;
 	}
 
-	char name_file_path[MAX_LEN_PATH];
-	if (snprintf(name_file_path, MAX_LEN_PATH, "%s/name", user_path) >= MAX_LEN_PATH)
+	char name_file_path[PATH_MAX];
+	if (snprintf(name_file_path, PATH_MAX, "%s/name", user_path) >= PATH_MAX)
 	{
 		perror("name file path too long");
 		return -1;
@@ -45,8 +46,8 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 	write(fd_name, name, strlen(name));
 	close(fd_name);
 
-	char port_file_path[MAX_LEN_PATH];
-	if (snprintf(port_file_path, MAX_LEN_PATH, "%s/udp_port", user_path) >= MAX_LEN_PATH)
+	char port_file_path[PATH_MAX];
+	if (snprintf(port_file_path, PATH_MAX, "%s/udp_port", user_path) >= PATH_MAX)
 	{
 		perror("port file path too long");
 		return -1;
@@ -63,8 +64,8 @@ int store_user(int id, const char *name, int udp_port, const char *key, const ch
 	write(fd_port, &udp_port, sizeof(int));
 	close(fd_port);
 
-	char key_file_path[MAX_LEN_PATH];
-	if (snprintf(key_file_path, MAX_LEN_PATH, "%s/key", user_path) >= MAX_LEN_PATH)
+	char key_file_path[PATH_MAX];
+	if (snprintf(key_file_path, PATH_MAX, "%s/key", user_path) >= PATH_MAX)
 	{
 		perror("key file path too long");
 		return -1;
@@ -92,7 +93,7 @@ int find_id(const char *path)
 	mkdir(path, 0755); // s'il n'existe pas déjà
 
 	int id = 0;
-	char dir_path[MAX_LEN_PATH];
+	char dir_path[PATH_MAX];
 
 	while (1)
 	{
@@ -107,7 +108,7 @@ int find_id(const char *path)
 
 int is_user_exists(const char *path, int id)
 {
-	char dir_path[MAX_LEN_PATH];
+	char dir_path[PATH_MAX];
 	snprintf(dir_path, sizeof(dir_path), "%s/%d", path, id);
 
 	struct stat st;
