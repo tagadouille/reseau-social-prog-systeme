@@ -204,7 +204,7 @@ int add_admin_group(int admin_id, int group_id)
         perror("open add admin group");
         return -1;
     }
-    if (write(fd, admin_id, sizeof(admin_id)) != sizeof(admin_id))
+    if (write(fd, &admin_id, sizeof(admin_id)) != sizeof(admin_id))
     {
         perror("write add admin");
         close(fd);
