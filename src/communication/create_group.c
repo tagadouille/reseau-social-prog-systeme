@@ -26,14 +26,14 @@ static void read_NOMG(u8 *buf, char *NOMG, u8 len)
     log_server("[read_NOMG] The name of the group is : %s", NOMG);
 }
 
-int read_create_group(int sock, req_create_group *request, u8 *buf_header)
+group_t* read_create_group(int sock, req_create_group *request, u8 *buf_header)
 {
     int user_id = read_id(buf_header);
 
     if (is_user_exists(USER_PATH, user_id) == 0)
     {
         log_server("The user with id %d doesn't exists");
-        return -1;
+        return NULL;
     }
 
     u8 buffer[256];
@@ -43,7 +43,7 @@ int read_create_group(int sock, req_create_group *request, u8 *buf_header)
     if (re < 0)
     {
         perror("read read create group 1");
-        return -1;
+        return NULL;
     }
     u8 len = buffer[1]; // Récupération de la longueur de NOMG
     log_server("[read_create_group] The length of the group name is : %i ", len);
@@ -51,9 +51,9 @@ int read_create_group(int sock, req_create_group *request, u8 *buf_header)
     char NOMG[len + 1];
 
     read_NOMG(buffer, NOMG, len);
-    prepare_group_req(request, read_id(buffer), NOMG);
+    prepare_group_req(request, user_id, NOMG);
 
-    return 0;
+    return group_initialize(-1, (const u8 *) NOMG, user_id);
 }
 
 void read_rep_create_group(u8 *buf, resp_create_group *response)

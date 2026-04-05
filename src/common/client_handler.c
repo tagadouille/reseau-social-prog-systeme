@@ -29,13 +29,16 @@ static int handle_create_group(int sock, u8 *buf_header)
 	// Création de la requete de création de groupe
 	req_create_group request;
 	memset(&request, 0, sizeof(request));
+
+	// Structure group utiliser pour les logs et avoir l'admin
+	group_t * group = read_create_group(sock, &request, buf_header);
 	
-	if(read_create_group(sock, &request, buf_header) < 0)
+	if(group == NULL)
 	{
 		return -1;
 	}
 
-	log_server("Creation of the group of the user %d will start", request.req_code_user_id);
+	log_server("Creation of the group of the user %d will start", group -> id_admin);
 
 	// Stockage du groupe :
 
@@ -49,6 +52,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 
 	if(wrapper == NULL)
 	{
+		group_struct_destroy(group);
 		return -1;
 	}
 
@@ -63,17 +67,20 @@ static int handle_create_group(int sock, u8 *buf_header)
 	if (r == -1)
 	{
 		perror("error store user");
+		group_struct_destroy(group);
 		return -1;
 	}
 
-	r = add_user_group(, group_id);
+	r = add_user_group(group->id_admin, group_id);
 
 	if(r < 0)
 	{
 		delete_group(group_id);
 		log_server("Adding the user failed, deleting the group..");
+		group_struct_destroy(group);
 		return -1;
 	}
+	group_struct_destroy(group);
 
 	log_server("Storing finish, create response");
 
