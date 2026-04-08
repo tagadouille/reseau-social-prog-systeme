@@ -30,6 +30,13 @@ group_t *group_fill(int group_id, const u8 *group_name, int id_admin, int *membe
     group->group_id = group_id;
 
     group->group_name = malloc(strlen((char *)group_name) + 1);
+
+    if(group->group_name == NULL)
+    {
+        perror("malloc group_name group fill");
+        free(group);
+        return NULL;
+    }
     memcpy(group->group_name, group_name, strlen((char *)group_name) + 1);
 
     group->id_admin = id_admin;
@@ -225,6 +232,8 @@ group_t *group_fill_from_files(int group_id)
     int *members_id = members_wrapper -> members_id;
     size_t members_id_len = members_wrapper -> members_id_len;
 
+    free(members_wrapper);
+
     // Extraction du port :
     char port_file_path[PATH_MAX];
 
@@ -246,6 +255,7 @@ group_t *group_fill_from_files(int group_id)
     if (read(fd_port, &mdiff_port, sizeof(mdiff_port)) != sizeof(mdiff_port))
     {
         perror("read port file");
+        close(fd_port);
         return NULL;
     }
     close(fd_port);

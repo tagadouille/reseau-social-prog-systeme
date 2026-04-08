@@ -100,4 +100,11 @@ int delete_user_group(int user_id, int group_id);
  */
 diff_wrapper_t * find_free_mdiff_addr_port(); //TODO utiliser le multithreading
 
+/**
+ * @brief Permet de déterminer un identifiant non utilisé. En admettant que le répertoire
+ * contient uniquement des sous-répertoires nommés par des entiers positifs.
+ * @return -1 si aucun id possible, l'id disponible sinon.
+ */
+int find_group_id();
+
 #endif

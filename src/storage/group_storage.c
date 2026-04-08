@@ -146,7 +146,7 @@ int add_user_group(int user_id, int group_id)
         return -1;
     }
 
-    int fd = open(dir_name, O_CREAT, 644);
+    int fd = open(dir_name, O_CREAT, 0644);
 
     if (fd < 0)
     {
@@ -394,6 +394,40 @@ diff_wrapper_t *find_free_mdiff_addr_port()
             {
                 ret->mdiff_addr[i] = rand() % 256;
             }
+
+            /*
+            Explication : 
+
+            Une adresse IPV6 pour multicast se présente de cette forme :
+
+            ff(scope + flag ):groupID
+
+            avec scope + flag= 
+                - 09 si global (public)
+                - 02 si local/privé (link-local multicast) dans le réseau local
+
+            Le scope est la portée de l'adresse (public/privé)
+
+            Le flag donne l'information sur le type de groupe.
+
+            Il y a deux flags : 
+                - 0 si adresse assignée officiellement
+                - 1 si l'adresse est temporaire/dynamique
+            Ce bit est appelé transient
+
+            ffXY
+                ↑
+                X = flags (4 bits)
+                Y = scope (4 bits)
+            -------------------------------------------------------------------
+
+            avec groupID étant le reste de l'adresse IPV6 :
+            exemple : 3a7b:91c2:4f88:aa12:09bc:77de:1234
+
+            En combinant tout ça fait : 
+
+            ff02:3a7b:91c2:4f88:aa12:09bc:77de:1234
+            */
         }
 
         // Générer un nouveau port si nécessaire
@@ -422,4 +456,23 @@ diff_wrapper_t *find_free_mdiff_addr_port()
     } while (1);
 
     return ret;
+}
+
+
+int find_group_id()
+{
+	mkdir(GROUP_PATH, 0755); // s'il n'existe pas déjà
+
+	int id = 1;
+	char dir_path[PATH_MAX];
+
+	while (1)
+	{
+		snprintf(dir_path, sizeof(dir_path), "%s/%d", GROUP_PATH, id);
+		struct stat st;
+		if (stat(dir_path, &st) == -1)
+			return id;
+		id++;
+	}
+	return -1;
 }

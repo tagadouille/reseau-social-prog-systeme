@@ -44,7 +44,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 	// Stockage du groupe :
 
 	// Trouver un id de groupe libre :
-	int group_id = find_id(GROUP_PATH);
+	int group_id = find_group_id();
 
 	log_server("[handle_create_group] Group id found : %d, let's find a free port and address", group_id);
 
@@ -54,6 +54,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 	if (wrapper == NULL)
 	{
 		group_struct_destroy(group);
+		free(request.group_name);
 		return -1;
 	}
 
@@ -67,10 +68,12 @@ static int handle_create_group(int sock, u8 *buf_header)
 	int r = store_group(group_id, request.group_name, mdiff_port, mdiff_addr);
 	if (r == -1)
 	{
+		free(request.group_name);
 		perror("error store user");
 		group_struct_destroy(group);
 		return -1;
 	}
+	free(request.group_name);
 
 	log_server("[handle_create_group] Storing the group finish. Storing the admin");
 
