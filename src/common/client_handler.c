@@ -124,6 +124,7 @@ static int handle_create_group(int sock, u8 *buf_header)
 void *handle(void *arg)
 {
 	int sock = *(int *)arg;
+	free(arg);
 
 	u8 buf[1024];
 	memset(buf, 0, sizeof(buf));
