@@ -380,6 +380,8 @@ diff_wrapper_t *find_free_mdiff_addr_port()
     int is_addr_good = 0; // Si une adresse libre a été trouvée
     int is_port_good = 0; // Si un port libre a été trouvé
 
+    srand(time(NULL));
+
     do
     {
         // Générer une nouvelle adresse si nécessaire
@@ -433,7 +435,7 @@ diff_wrapper_t *find_free_mdiff_addr_port()
         // Générer un nouveau port si nécessaire
         if (!is_port_good)
         {
-            ret->mdiff_port = 5000 + rand() % 1000;
+            ret->mdiff_port = 5000 + rand() % 10000;
         }
 
         int find_res = find_free_mdiff_addr_helper(ret, &is_addr_good, &is_port_good);
@@ -473,6 +475,6 @@ int find_group_id()
 		if (stat(dir_path, &st) == -1)
 			return id;
 		id++;
-	}
+	} 
 	return -1;
 }
